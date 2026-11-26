@@ -3,21 +3,23 @@
 // serves them all as MCP tools on stdio.
 module mcpane;
 
-import avt;
+import avt::mcp;
 import picker;
 import pointer;
 import view;
 import std::io;
 
 fn void usage() {
-	io::eprintn(`usage: mcpane COMMAND [options] ...
+	io::eprintn(
+		`usage: mcpane COMMAND [options] ...
 commands:
   picker   show options in a grid; print the one chosen
   pointer  draw on one to four images; print what was marked
   view     show one to four images
   --mcp    serve them as MCP tools on stdio: pick, draw, view
 
-Run a command with no arguments for its options.`);
+Run a command with no arguments for its options.`
+	);
 }
 
 fn int main(String[] args) {
@@ -27,8 +29,8 @@ fn int main(String[] args) {
 	}
 	switch (args[1]) {
 		case "--mcp":
-			avt::Tool[3] tools = { picker::tool(), pointer::draw_tool(), view::tool() };
-			return avt::serve("mcpane", &tools, args[0]);
+			mcp::Tool[3] tools = { mcp::pick_tool(), mcp::draw_tool(), mcp::view_tool() };
+			return mcp::serve("mcpane", &tools, args[0]);
 		case "picker": return picker::run(args[1..]);
 		case "pointer": return pointer::run(args[1..]);
 		case "view": return view::run(args[1..]);

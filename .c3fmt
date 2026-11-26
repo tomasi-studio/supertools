@@ -1,0 +1,4 @@
+use_tabs: true
+brace_style: K&R
+else_on_newline: false
+newline_at_eof: true

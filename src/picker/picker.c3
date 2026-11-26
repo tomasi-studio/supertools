@@ -13,7 +13,11 @@ import std::collections::list;
 import libc;
 import avt;
 
-enum Kind { TEXT, IMAGE, CARD }
+enum Kind {
+	TEXT,
+	IMAGE,
+	CARD
+}
 
 struct Item {
 	Kind kind;
@@ -23,9 +27,9 @@ struct Item {
 	xray::Image* img; // decoded once, on first show
 }
 
-const sz PAD_X = 3;      // window side margin, cells
-const sz GAP_X = 2;      // between tiles, cells
-const sz GAP_Y = 1;      // between grid rows, cells
+const sz PAD_X      = 3; // window side margin, cells
+const sz GAP_X      = 2; // between tiles, cells
+const sz GAP_Y      = 1; // between grid rows, cells
 const sz CARD_PAD_X = 2; // inside a tile, cells
 const sz CARD_PAD_Y = 1;
 
@@ -50,12 +54,12 @@ fn sz Model.header_h(&self) => self.prompt.len > 0 ? 5 : 4;
 // and a grid that does not fit scrolls.
 fn sz Model.first_rows(&self) {
 	sz tile_w = (self.cols - 2 * PAD_X) / self.per_row - GAP_X - 2 * CARD_PAD_X;
-	sz h = self.header_h();
+	sz h      = self.header_h();
 	for (sz r = 0; r < self.grid_rows(); r++) {
 		sz row = 1;
 		for (sz i = r * self.per_row; i < (r + 1) * self.per_row && i < (sz)self.items.len(); i++) {
 			Item* it = &self.items[i];
-			sz ih = glaze::wrapped_line_count(it.title, tile_w) + glaze::wrapped_line_count(it.desc, tile_w);
+			sz ih    = glaze::wrapped_line_count(it.title, tile_w) + glaze::wrapped_line_count(it.desc, tile_w);
 			if (it.image.len) ih += tile_w / 2 + 1;
 			if (ih > row) row = ih;
 		}
@@ -107,7 +111,7 @@ fn xray::Image* Model.picture(&self, Item* it) {
 }
 
 fn void Model.choose(&self, sz i) {
-	Item* it = &self.items[i];
+	Item* it     = &self.items[i];
 	String label = it.kind == IMAGE ? it.image : it.title;
 	io::printfn("%d\t%s", i, label);
 	(void)io::stdout().flush();
@@ -126,15 +130,14 @@ fn void tile_clicked(void* id, String id_str, sz col, sz row) {
 
 // thumb is an item's image as a square-ish rounded picture across the tile.
 fn milktea::Node* Model.thumb(&self, Item* it) {
-	return xray::image(self.picture(it))
-		.decorate(xray::solid(avt::rgb(0x000000)).round(8));
+	return xray::image(self.picture(it)).decorate(xray::solid(avt::rgb(0x000000)).round(8));
 }
 
 fn milktea::Node* Model.tile(&self, sz i) {
-	Item* it = &self.items[i];
-	bool selected = i == self.sel;
+	Item* it             = &self.items[i];
+	bool selected        = i == self.sel;
 	glaze::Style title_s = glaze::style().foreground(avt::rgb(avt::INK)).with_bold(true);
-	glaze::Style desc_s = glaze::style().foreground(avt::rgb(avt::MUTED));
+	glaze::Style desc_s  = glaze::style().foreground(avt::rgb(avt::MUTED));
 
 	milktea::Node* body = milktea::vstack();
 	switch (it.kind) {
@@ -146,8 +149,7 @@ fn milktea::Node* Model.tile(&self, sz i) {
 			if (it.image.len > 0) {
 				body.add(self.thumb(it));
 			}
-			milktea::Node* caption = milktea::vstack()
-				.with_padding(it.image.len > 0 ? 1 : 0, 0, 0, 0)
+			milktea::Node* caption = milktea::vstack().with_padding(it.image.len > 0 ? 1 : 0, 0, 0, 0)
 				.add(milktea::text(it.title, title_s));
 			if (it.desc.len > 0) caption.add(milktea::text(it.desc, desc_s));
 			body.add(caption);
@@ -159,9 +161,9 @@ fn milktea::Node* Model.tile(&self, sz i) {
 	} else {
 		d = d.with_border(1, avt::rgb(avt::EDGE)).with_shadow(0, 6, 16, avt::rgba(0x000000, 140));
 	}
-	return body
-		.with_padding(CARD_PAD_Y, CARD_PAD_X, CARD_PAD_Y, CARD_PAD_X)
-		.style(glaze::style().background(avt::rgb(avt::CARD)), hover: glaze::style().background(avt::rgb(avt::CARD_HOVER)))
+	return body.with_padding(CARD_PAD_Y, CARD_PAD_X, CARD_PAD_Y, CARD_PAD_X)
+		.style(glaze::style()
+			.background(avt::rgb(avt::CARD)), hover: glaze::style().background(avt::rgb(avt::CARD_HOVER)))
 		.decorate(d)
 		.fill(1)
 		.ref(it)
@@ -199,8 +201,11 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 }
 
 fn milktea::Node* Model.view(&self) @dynamic {
-	milktea::Node* top = avt::header(self.prompt, "Click to choose  ·  arrows + enter  ·  esc to cancel",
-		self.none.len > 0 ? avt::button(self.none, &none_clicked) : null);
+	milktea::Node* top = avt::header(
+		self.prompt,
+		"Click to choose  ·  arrows + enter  ·  esc to cancel",
+		self.none.len > 0 ? avt::button(self.none, &none_clicked) : null
+	);
 
 	self.keep_visible();
 	milktea::Node* grid = milktea::vstack().with_gap(GAP_Y);
@@ -213,70 +218,8 @@ fn milktea::Node* Model.view(&self) @dynamic {
 		grid.add(row);
 	}
 
-	return milktea::vstack()
-		.with_padding(0, PAD_X, 0, PAD_X)
-		.decorate(avt::background())
-		.ref(&self.scroll).pointer(xray::PointerShape.ARROW) // a target: keep_visible reads its rect
+	return milktea::vstack().with_padding(0, PAD_X, 0, PAD_X).decorate(avt::background()).ref(&self.scroll)
+		.pointer(xray::PointerShape.ARROW)// a target: keep_visible reads its rect
 		.add(top)
 		.add(grid);
-}
-
-fn void usage() {
-	io::eprintn(`usage: mcpane picker [options] ITEM...
-Shows the items in a grid; prints "<index>\t<label>" for the one clicked
-(or picked with arrows + Enter). Esc exits 1 with no output.
-
-items:
-  --text LABEL                  a text option
-  --image PATH                  an image option (label = PATH)
-  --card IMAGE TITLE DESC       a card; IMAGE may be "" (label = TITLE)
-options:
-  --cols N      tiles per row (default 3); fewer = bigger tiles
-  --prompt S    heading shown above the grid
-  --none LABEL  a "none of these" button; clicking it prints "-1\tLABEL"
-  --title S     window title (default "Pick one")
-  --width N     window width in cells (default 100)`);
-}
-
-// run is `mcpane picker`: args[0] is the subcommand, options follow.
-fn int run(String[] args) {
-	Model m = { .per_row = 3, .cols = 100 };
-	m.items.init(mem); // an uninitialised List would take the temp allocator
-	g_model = &m;
-	String title = "Pick one";
-	for (sz i = 1; i < args.len; i++) {
-		String a = args[i];
-		sz left = args.len - i - 1;
-		switch {
-			case a == "--text" && left >= 1:
-				m.items.push({ .kind = TEXT, .title = args[++i] });
-			case a == "--image" && left >= 1:
-				m.items.push({ .kind = IMAGE, .image = args[++i] });
-			case a == "--card" && left >= 3:
-				m.items.push({ .kind = CARD, .image = args[i + 1], .title = args[i + 2], .desc = args[i + 3] });
-				i += 3;
-			case a == "--cols" && left >= 1:
-				m.per_row = args[++i].to_int() ?? 3;
-			case a == "--width" && left >= 1:
-				m.cols = args[++i].to_int() ?? 100;
-			case a == "--none" && left >= 1:
-				m.none = args[++i];
-			case a == "--prompt" && left >= 1:
-				m.prompt = args[++i];
-			case a == "--title" && left >= 1:
-				title = args[++i];
-			default:
-				usage();
-				return 2;
-		}
-	}
-	if (m.items.len() == 0) {
-		usage();
-		return 2;
-	}
-	if (m.per_row < 1) m.per_row = 1;
-	if (m.cols < 30) m.cols = 30;
-	m.rows = m.first_rows();
-	avt::run((milktea::Model)&m, title, (int)m.cols, (int)m.rows);
-	return 1;
 }

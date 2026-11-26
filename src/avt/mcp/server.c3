@@ -2,8 +2,9 @@
 // tools. Claude Code starts it once per session; a tool call usually runs a
 // fresh process of the same binary for the window, since a window can only
 // run once per process, and turns its output into the tool result.
-module avt;
+module avt::mcp;
 
+import avt;
 import std::io;
 import std::core::dstring;
 import std::core::string;
@@ -22,36 +23,15 @@ const String PROTOCOL_VERSION = "2025-06-18";
 alias ToolFn = fn String(String self_path, Object* args);
 
 struct Tool {
-	String name;   // the tool's name
+	String name; // the tool's name
 	String schema; // the tool's JSON definition
 	ToolFn call;
-}
-
-// json_str appends s as a JSON string literal.
-fn void json_str(DString* out, String s) {
-	out.append('"');
-	foreach (c : s) {
-		switch (c) {
-			case '"': out.append("\\\"");
-			case '\\': out.append("\\\\");
-			case '\n': out.append("\\n");
-			case '\r': out.append("\\r");
-			case '\t': out.append("\\t");
-			default:
-				if (c < 0x20) {
-					out.appendf("\\u%04x", c);
-				} else {
-					out.append(c);
-				}
-		}
-	}
-	out.append('"');
 }
 
 // json_id appends a request's id the way it came: a number or a string.
 fn void json_id(DString* out, Object* id) @local {
 	if (id.is_string()) {
-		json_str(out, id.s);
+		avt::json_str(out, id.s);
 	} else if (id.is_int()) {
 		out.appendf("%d", id.i);
 	} else {
@@ -79,7 +59,7 @@ fn void reply_error(Object* id, int code, String message) @local {
 	out.append(`{"jsonrpc":"2.0","id":`);
 	json_id(&out, id);
 	out.appendf(`,"error":{"code":%d,"message":`, code);
-	json_str(&out, message);
+	avt::json_str(&out, message);
 	out.append("}}");
 	send(out.str_view());
 }
@@ -89,7 +69,7 @@ fn void reply_error(Object* id, int code, String message) @local {
 fn String tool_result(String structured, bool is_error = false) {
 	DString out = dstring::temp();
 	out.append(`{"content":[{"type":"text","text":`);
-	json_str(&out, structured);
+	avt::json_str(&out, structured);
 	out.append("}]");
 	if (!is_error) out.appendf(`,"structuredContent":%s`, structured);
 	if (is_error) out.append(`,"isError":true`);
@@ -102,7 +82,7 @@ fn String tool_result(String structured, bool is_error = false) {
 fn String tool_result_images(String structured, String[] pngs) {
 	DString out = dstring::temp();
 	out.append(`{"content":[{"type":"text","text":`);
-	json_str(&out, structured);
+	avt::json_str(&out, structured);
 	out.append('}');
 	foreach (path : pngs) {
 		char[]? data = file::load_temp(path);
@@ -118,7 +98,7 @@ fn String tool_result_images(String structured, String[] pngs) {
 fn String error_result(String message) {
 	DString s = dstring::temp();
 	s.append(`{"error":`);
-	json_str(&s, message);
+	avt::json_str(&s, message);
 	s.append('}');
 	return tool_result(s.str_view(), true);
 }
@@ -144,7 +124,7 @@ fn Run? run_self(String[] argv) {
 		out.append((String)buf[:n]);
 	}
 	CInt code = p.join() ?? -1;
-	sz en = p.read_stderr(&buf, buf.len) ?? 0;
+	sz en     = p.read_stderr(&buf, buf.len) ?? 0;
 	return { code, out.str_view().trim(), ((String)buf[:en]).tcopy().trim() };
 }
 
@@ -159,7 +139,7 @@ fn void? start_self(String[] argv) {
 	if (!null_file) return io::FILE_NOT_FOUND~;
 	defer libc::fclose(null_file);
 	ProcessStdio dev_null = process::bind((CInt)libc::fileno(null_file));
-	Process p = process::spawn(argv, SpawnOptions.INHERIT_ENV, {}, dev_null, dev_null, dev_null)!;
+	Process p             = process::spawn(argv, SpawnOptions.INHERIT_ENV, { }, dev_null, dev_null, dev_null)!;
 	if (!g_started.is_initialized()) g_started.init(mem);
 	g_started.push(p);
 }
@@ -191,9 +171,9 @@ fn void handle(String server, Tool[] tools, String self_path, String line) @loca
 			if (try params = msg.get("params")) version = params.get_string("protocolVersion") ?? version;
 			DString r = dstring::temp();
 			r.append(`{"protocolVersion":`);
-			json_str(&r, version);
+			avt::json_str(&r, version);
 			r.append(`,"capabilities":{"tools":{}},"serverInfo":{"name":`);
-			json_str(&r, server);
+			avt::json_str(&r, server);
 			r.append(`,"version":"1.0.0"}}`);
 			reply(id, r.str_view());
 		case "ping":
