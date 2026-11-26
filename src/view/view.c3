@@ -23,85 +23,31 @@ struct Panel {
 	xray::Image* img;
 	String title; // optional caption under the image
 	String desc;
-	sz slot_w, slot_h; // the panel's share of the window as last solved, points
-	sz iw, ih;         // the size the image is shown at, to fit its slot
-	sz cap_h;          // caption height under the image, points
 }
 
 struct Model {
 	Panel[MAX_IMAGES] panels;
 	sz n;
 	String prompt;
-	int layout_tries; // frames redrawn in a row to settle the layout
-}
-
-// caption_h is the caption's height for an image w points wide.
-fn sz Panel.caption_h(&self, sz w) {
-	if (!self.title.len && !self.desc.len) return 0;
-	sz cols = math::max((w - 2 * CAP_PAD_X) / avt::CELL_W, (sz)4);
-	sz lines = 0;
-	if (self.title.len) lines += glaze::wrapped_line_count(self.title, cols);
-	if (self.desc.len) lines += glaze::wrapped_line_count(self.desc, cols);
-	return lines * avt::CELL_H + 2 * CAP_PAD;
-}
-
-// fit sizes the image to its slot, keeping its shape, with room for the
-// caption under it (whose height depends on the image's width).
-fn void Panel.fit(&self) {
-	float ox, oy, dw, dh;
-	sz cap = self.caption_h(self.slot_w);
-	for (int pass = 0; pass < 2; pass++) {
-		sz room = math::max(self.slot_h - cap, (sz)20);
-		self.img.placement(CONTAIN, (float)self.slot_w, (float)room, &ox, &oy, &dw, &dh);
-		sz again = self.caption_h((sz)dw);
-		if (again <= cap) break;
-		cap = again;
-	}
-	self.cap_h = cap;
-	self.iw = math::max((sz)dw, (sz)1);
-	self.ih = math::max((sz)dh, (sz)1);
-}
-
-// read_layout picks up each slot's solved size from the click targets (a
-// slot is tagged with ref(&slot_w)) and refits the images that changed.
-fn void Model.read_layout(&self) {
-	bool refit = false;
-	foreach (t : milktea::g_program.click_targets.array_view()) {
-		for (sz i = 0; i < self.n; i++) {
-			Panel* p = &self.panels[i];
-			if (t.id_ptr == &p.slot_w && (t.rect.w != p.slot_w || t.rect.h != p.slot_h)) {
-				p.slot_w = t.rect.w;
-				p.slot_h = t.rect.h;
-				p.fit();
-				refit = true;
-			}
-		}
-	}
-	for (sz i = 0; i < self.n; i++) if (!self.panels[i].slot_w) refit = true;
-	if (refit && self.layout_tries++ < 4) milktea::request_redraw();
-	if (!refit) self.layout_tries = 0;
 }
 
 fn milktea::Node* spacer(sz w) => milktea::vstack().width(xray::pixels(w));
 
+// card is a panel's share of the row: the image, as big as fits keeping its
+// shape, with the caption under it.
 fn milktea::Node* Panel.card(&self) {
-	milktea::Node* card = milktea::vstack().width(xray::pixels(self.iw))
-		.add(xray::image(self.img, STRETCH).height(xray::pixels(self.ih)));
-	if (self.cap_h) {
+	milktea::Node* card = milktea::vstack().fill(1)
+		.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)))
+		.add(xray::image(self.img, CONTAIN).fill(1));
+	if (self.title.len || self.desc.len) {
 		milktea::Node* text = milktea::vstack().fill(1);
 		if (self.title.len) text.add(milktea::text(self.title, glaze::style().foreground(avt::rgb(avt::INK)).with_bold(true)));
 		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style().foreground(avt::rgb(avt::MUTED))));
-		card.add(milktea::vstack().height(xray::pixels(self.cap_h))
-			.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
-			.add(milktea::hstack().fill(1).add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X))));
+		card.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
+			.add(milktea::hstack().add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X)))
+			.add(milktea::vstack().height(xray::pixels(CAP_PAD)));
 	}
-	card.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)));
-	// The pointer shape keeps the slot as a click target, with its rect.
-	return milktea::vstack().fill(1)
-		.with_justify(xray::JustifyContent.JUSTIFY_CENTER)
-		.with_align(xray::AlignItems.ALIGN_CENTER)
-		.ref(&self.slot_w).pointer(xray::PointerShape.ARROW)
-		.add(self.iw > 1 ? card : milktea::vstack());
+	return card;
 }
 
 fn milktea::Cmd Model.init(&self) @dynamic {
@@ -125,7 +71,6 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 }
 
 fn milktea::Node* Model.view(&self) @dynamic {
-	self.read_layout();
 	milktea::Node* canvas = milktea::vstack().fill(1);
 	sz per_row = self.n == 4 ? 2 : self.n;
 	for (sz r = 0; r * per_row < self.n; r++) {
