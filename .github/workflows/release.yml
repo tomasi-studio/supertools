@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      TARBALL: supertools-${{ inputs.version }}-arm64.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: supertools
+
+      # project.json pulls sources from ../milktea
+      - uses: actions/checkout@v4
+        with:
+          repository: ricardobeat/milktea
+          path: milktea
+
+      - name: Install c3c
+        run: brew install c3c
+
+      - name: Build
+        working-directory: supertools
+        run: c3c build supertools
+
+      - name: Package
+        run: |
+          tar -C supertools/out -czf "$TARBALL" supertools
+          echo "SHA256=$(shasum -a 256 "$TARBALL" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" "$TARBALL" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "supertools $VERSION" --notes "supertools $VERSION (macOS arm64)"
+
+      - name: Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          gh repo clone tomasi-studio/homebrew-tap tap
+          cd tap
+          sed -i '' \
+            -e "s|^  version \".*\"|  version \"$VERSION\"|" \
+            -e "s|^  sha256 \".*\"|  sha256 \"$SHA256\"|" \
+            Formula/supertools.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "supertools $VERSION"
+          git push "https://x-access-token:$GH_TOKEN@github.com/tomasi-studio/homebrew-tap.git" HEAD
