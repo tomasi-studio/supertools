@@ -18,25 +18,24 @@ jobs:
       TARBALL: supertools-${{ inputs.version }}-arm64.tar.gz
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: supertools
-
-      # project.json pulls sources from ../milktea
-      - uses: actions/checkout@v4
-        with:
-          repository: ricardobeat/milktea
-          path: milktea
 
       - name: Install c3c
         run: brew install c3c
 
+      # lib/ is gitignored; fetch the dependencies listed in project.json into it
+      - name: Fetch dependencies
+        run: |
+          mkdir -p lib
+          cd lib
+          ruby -rjson -e 'puts JSON.parse(File.read("../project.json"))["dependencies"]' |
+            while read -r dep; do c3c fetch "$dep"; done
+
       - name: Build
-        working-directory: supertools
         run: c3c build supertools
 
       - name: Package
         run: |
-          tar -C supertools/out -czf "$TARBALL" supertools
+          tar -C out -czf "$TARBALL" supertools
           echo "SHA256=$(shasum -a 256 "$TARBALL" | cut -d' ' -f1)" >> "$GITHUB_ENV"
 
       - name: Create release
