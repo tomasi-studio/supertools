@@ -4,22 +4,14 @@
   "macos-min-version": "27.0",
   "features": ["NO_CONTROL"],
   "linked-libraries": ["z"],
+  "dependency-search-paths": ["lib"],
+  "dependencies": ["https://c3.ricar.do/github.com:ricardobeat/milktea@main:15b3967060eb84188b59b2c629a09c756760942b4a6342cf66f697df803e9e2e"],
   "targets": {
     "supertools": {
       "type": "executable",
       "opt": "O2",
-      "sources": [
-        "src/**", "../milktea/examples/lib/stb_image.c3",
-        "../milktea/milktea/**", "../milktea/glaze/**", "../milktea/dye/**",
-        "../milktea/xray/**", "../milktea/src/**", "../milktea/gui/**"
-      ],
-      "c-sources": [
-        "src/image.m", "src/stb_image_write_impl.c",
-        "../milktea/examples/lib/stb_image_impl.c",
-        "../milktea/milktea/tty_winsize.c",
-        "../milktea/gui/backend.m", "../milktea/gui/platform_macos.m"
-      ],
-      "c-include-dirs": ["../milktea/vendor/sokol"],
+      "sources": ["src/**"],
+      "c-sources": ["src/image.m", "src/stb_image_write_impl.c", "src/vendor/stb_image_impl.c"],
       "linked-libraries": ["ImageIO.framework", "CoreGraphics.framework", "CoreFoundation.framework"]
     }
   }
