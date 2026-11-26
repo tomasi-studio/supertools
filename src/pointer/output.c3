@@ -2,7 +2,7 @@
 // as JSON.
 module pointer;
 
-import avt;
+import supertools;
 import milktea;
 import xray;
 import glaze;
@@ -45,10 +45,10 @@ fn void Model.describe(&self, DString* out, Stroke* s) {
 	}
 	double per_pt = (double)p.width / math::max((double)p.iw, 1.0); // file pixels per screen point
 	double extent = (double)math::max(x1 - x0, y1 - y0);
-	double gap    = math::sqrt(
+	double gap = math::sqrt(
 		(double)((last[0] - first[0]) * (last[0] - first[0]) + (last[1] - first[1]) * (last[1] - first[1]))
 	);
-	String kind   = "line";
+	String kind = "line";
 	if (extent < CLICK * per_pt) {
 		kind = "click";
 	} else if (gap < 0.4 * extent && len > 1.5 * extent) {
@@ -87,15 +87,15 @@ fn void Model.finish(&self) {
 		Panel* p = &self.panels[i];
 		if (i) out.append(',');
 		out.append(`{"path":`);
-		avt::json_str(&out, p.path);
+		supertools::json_str(&out, p.path);
 		out.appendf(`,"width":%d,"height":%d`, p.width, p.height);
 		bool marked = false;
 		foreach (&s : self.strokes) if (s.panel == i) marked = true;
 		if (marked) {
 			String png = string::tformat("%s/pointer-%d-%d.png", dir, getpid(), i);
-			if (avt::write_png(png, p.img)) {
+			if (supertools::write_png(png, p.img)) {
 				out.append(`,"marked":`);
-				avt::json_str(&out, png);
+				supertools::json_str(&out, png);
 			}
 		}
 		out.append('}');

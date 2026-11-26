@@ -1,8 +1,8 @@
-// The `mcpane pointer` command line: parses the options, builds the model
+// The `supertools pointer` command line: parses the options, builds the model
 // and opens the window.
 module pointer;
 
-import avt;
+import supertools;
 import milktea;
 import milktea_gui;
 import std::io;
@@ -10,7 +10,7 @@ import std::collections::list;
 
 fn void usage() {
 	io::eprintn(
-		`usage: mcpane pointer [options] IMAGE [--label S] [--desc S]...
+		`usage: supertools pointer [options] IMAGE [--label S] [--desc S]...
 Shows one to four images (layouts 1, 1-2, 1-2-3, 2x2) to draw on with the
 pointer. Enter or Done writes each marked-up image to a PNG in $TMPDIR and
 prints a summary as JSON, in each image's own pixels:
@@ -29,7 +29,7 @@ options:
 	);
 }
 
-// run is `mcpane pointer`: args[0] is the subcommand, options follow.
+// run is `supertools pointer`: args[0] is the subcommand, options follow.
 fn int run(String[] args) {
 	Model m = { .color = 2 };
 	// Heap-backed: an uninitialised List takes the temp allocator, which
@@ -90,6 +90,6 @@ fn int run(String[] args) {
 	}
 	int cols = m.n == 3 ? 150 : 110;
 	int rows = m.n == 4 ? 50 : m.n == 3 ? 34 : 42;
-	milktea_gui::run((milktea::Model)&m, avt::window(title, cols, rows));
+	milktea_gui::run((milktea::Model)&m, supertools::window(title, cols, rows));
 	return 1;
 }

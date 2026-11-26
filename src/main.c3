@@ -1,9 +1,9 @@
-// mcpane: small desktop windows an agent opens to show the user something
+// supertools: small desktop windows an agent opens to show the user something
 // and, for some, get an answer back. Each subcommand is one window; --mcp
 // serves them all as MCP tools on stdio.
-module mcpane;
+module main;
 
-import avt::mcp;
+import supertools::mcp;
 import picker;
 import pointer;
 import view;
@@ -11,7 +11,7 @@ import std::io;
 
 fn void usage() {
 	io::eprintn(
-		`usage: mcpane COMMAND [options] ...
+		`usage: supertools COMMAND [options] ...
 commands:
   picker   show options in a grid; print the one chosen
   pointer  draw on one to four images; print what was marked
@@ -30,7 +30,7 @@ fn int main(String[] args) {
 	switch (args[1]) {
 		case "--mcp":
 			mcp::Tool[3] tools = { mcp::pick_tool(), mcp::draw_tool(), mcp::view_tool() };
-			return mcp::serve("mcpane", &tools, args[0]);
+			return mcp::serve("supertools", &tools, args[0]);
 		case "picker": return picker::run(args[1..]);
 		case "pointer": return pointer::run(args[1..]);
 		case "view": return view::run(args[1..]);

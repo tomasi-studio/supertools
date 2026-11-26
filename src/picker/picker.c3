@@ -11,7 +11,7 @@ import std::io;
 import std::core::string;
 import std::collections::list;
 import libc;
-import avt;
+import supertools;
 
 enum Kind {
 	TEXT,
@@ -106,7 +106,7 @@ fn void Model.scroll_by(&self, sz d) {
 // picture decodes the item's image the first time it is shown. A file that
 // will not decode shows as a flat placeholder.
 fn xray::Image* Model.picture(&self, Item* it) {
-	if (!it.img) it.img = avt::load_image(it.image) ?? avt::placeholder();
+	if (!it.img) it.img = supertools::load_image(it.image) ?? supertools::placeholder();
 	return it.img;
 }
 
@@ -130,14 +130,14 @@ fn void tile_clicked(void* id, String id_str, sz col, sz row) {
 
 // thumb is an item's image as a square-ish rounded picture across the tile.
 fn milktea::Node* Model.thumb(&self, Item* it) {
-	return xray::image(self.picture(it)).decorate(xray::solid(avt::rgb(0x000000)).round(8));
+	return xray::image(self.picture(it)).decorate(xray::solid(supertools::rgb(0x000000)).round(8));
 }
 
 fn milktea::Node* Model.tile(&self, sz i) {
 	Item* it             = &self.items[i];
 	bool selected        = i == self.sel;
-	glaze::Style title_s = glaze::style().foreground(avt::rgb(avt::INK)).with_bold(true);
-	glaze::Style desc_s  = glaze::style().foreground(avt::rgb(avt::MUTED));
+	glaze::Style title_s = glaze::style().foreground(supertools::rgb(supertools::INK)).with_bold(true);
+	glaze::Style desc_s  = glaze::style().foreground(supertools::rgb(supertools::MUTED));
 
 	milktea::Node* body = milktea::vstack();
 	switch (it.kind) {
@@ -157,13 +157,15 @@ fn milktea::Node* Model.tile(&self, sz i) {
 
 	xray::Decoration d = xray::solid().round(12);
 	if (selected) {
-		d = d.with_border(2, avt::rgb(avt::ACCENT)).with_shadow(0, 0, 18, avt::rgba(avt::ACCENT, 90), 1);
+		d = d.with_border(2, supertools::rgb(supertools::ACCENT))
+			.with_shadow(0, 0, 18, supertools::rgba(supertools::ACCENT, 90), 1);
 	} else {
-		d = d.with_border(1, avt::rgb(avt::EDGE)).with_shadow(0, 6, 16, avt::rgba(0x000000, 140));
+		d = d.with_border(1, supertools::rgb(supertools::EDGE)).with_shadow(0, 6, 16, supertools::rgba(0x000000, 140));
 	}
 	return body.with_padding(CARD_PAD_Y, CARD_PAD_X, CARD_PAD_Y, CARD_PAD_X)
 		.style(glaze::style()
-			.background(avt::rgb(avt::CARD)), hover: glaze::style().background(avt::rgb(avt::CARD_HOVER)))
+			.background(supertools::rgb(supertools::CARD)), hover: glaze::style()
+				.background(supertools::rgb(supertools::CARD_HOVER)))
 		.decorate(d)
 		.fill(1)
 		.ref(it)
@@ -201,10 +203,10 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 }
 
 fn milktea::Node* Model.view(&self) @dynamic {
-	milktea::Node* top = avt::header(
+	milktea::Node* top = supertools::header(
 		self.prompt,
 		"Click to choose  ·  arrows + enter  ·  esc to cancel",
-		self.none.len > 0 ? avt::button(self.none, &none_clicked) : null
+		self.none.len > 0 ? supertools::button(self.none, &none_clicked) : null
 	);
 
 	self.keep_visible();
@@ -218,7 +220,7 @@ fn milktea::Node* Model.view(&self) @dynamic {
 		grid.add(row);
 	}
 
-	return milktea::vstack().with_padding(0, PAD_X, 0, PAD_X).decorate(avt::background()).ref(&self.scroll)
+	return milktea::vstack().with_padding(0, PAD_X, 0, PAD_X).decorate(supertools::background()).ref(&self.scroll)
 		.pointer(xray::PointerShape.ARROW)// a target: keep_visible reads its rect
 		.add(top)
 		.add(grid);

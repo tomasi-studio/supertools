@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcpane — Visual windows for agents</title>
+  <title>supertools — Visual windows for agents</title>
   <meta name="description" content="Small desktop windows an agent opens to pick options, mark up images, or show visuals—over CLI or a single stdio MCP server." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,14 +15,14 @@
 
   <header class="topbar">
     <div class="container topbar-inner">
-      <a href="#top" class="brand" aria-label="mcpane home">
+      <a href="#top" class="brand" aria-label="supertools home">
         <span class="brand-glyph" aria-hidden="true">
           <span></span>
           <span class="active"></span>
           <span></span>
           <span></span>
         </span>
-        <span class="brand-name">mcpane</span>
+        <span class="brand-name">supertools</span>
       </a>
 
       <nav class="nav-links" aria-label="Primary">
@@ -45,7 +45,7 @@
         <div class="hero-copy">
           <h1>Small desktop windows<br />for your agents.</h1>
           <p class="hero-lead">
-            <code>mcpane</code> opens native borderless windows for three visual jobs—<code>pick</code> an option, <code>draw</code> on images, or <code>view</code> results—from a shell command or one stdio MCP server.
+            <code>supertools</code> opens native borderless windows for three visual jobs—<code>pick</code> an option, <code>draw</code> on images, or <code>view</code> results—from a shell command or one stdio MCP server.
           </p>
           <div class="hero-actions">
             <button type="button" class="btn btn-primary" id="focus-demo-btn">
@@ -65,7 +65,7 @@
         <div class="stage-shell" id="stage-shell">
           <!-- TOP TOOL SWITCHER -->
           <div class="stage-toolbar">
-            <div class="tool-switcher" role="tablist" aria-label="mcpane tools">
+            <div class="tool-switcher" role="tablist" aria-label="supertools tools">
               <button type="button" class="tool-tab is-active" role="tab" aria-selected="true" data-tool="pick">
                 <span class="tool-dot"></span>
                 <span>pick</span>
@@ -94,17 +94,17 @@
             <div class="preset-tabs" id="hero-preset-tabs" role="tablist" aria-label="Tool examples"></div>
           </div>
 
-          <!-- SIMULATED TUI SURFACE WITH FLOATING MCPANE WINDOW -->
-          <div class="desktop-canvas" id="desktop-canvas" tabindex="0" aria-label="Interactive mcpane desktop window demo">
+          <!-- SIMULATED TUI SURFACE WITH FLOATING SUPERTOOLS WINDOW -->
+          <div class="desktop-canvas" id="desktop-canvas" tabindex="0" aria-label="Interactive supertools desktop window demo">
             <div class="term-backdrop" id="term-backdrop" aria-hidden="true">
               <div class="term-chrome">
                 <div class="term-title" id="term-title">~/projects/renderer · claude</div>
-                <div class="term-badge">mcp: mcpane</div>
+                <div class="term-badge">mcp: supertools</div>
               </div>
               <div class="term-body" id="term-body"></div>
               <div class="term-input-row">
                 <span class="term-prompt-arrow">❯</span>
-                <span class="term-input-placeholder" id="term-input-status">waiting on mcpane tool call…</span>
+                <span class="term-input-placeholder" id="term-input-status">waiting on supertools tool call…</span>
                 <span class="term-cursor"></span>
               </div>
             </div>
@@ -224,7 +224,7 @@
       <div class="container">
         <div class="section-head">
           <p class="section-kicker">Interactive builder</p>
-          <h2>Compose an mcpane call.</h2>
+          <h2>Compose an supertools call.</h2>
           <p class="section-desc">
             Switch between <code>pick</code>, <code>draw</code>, and <code>view</code>, edit options and items, and copy either the CLI command or the MCP arguments.
           </p>
@@ -232,13 +232,13 @@
 
         <div class="pg-mode-bar" id="pg-mode-bar" role="tablist" aria-label="Playground tool">
           <button type="button" class="pg-mode-btn is-active" data-pg-tool="pick" role="tab" aria-selected="true">
-            <code>mcpane picker</code> <span>→ pick</span>
+            <code>supertools picker</code> <span>→ pick</span>
           </button>
           <button type="button" class="pg-mode-btn" data-pg-tool="draw" role="tab" aria-selected="false">
-            <code>mcpane pointer</code> <span>→ draw</span>
+            <code>supertools pointer</code> <span>→ draw</span>
           </button>
           <button type="button" class="pg-mode-btn" data-pg-tool="view" role="tab" aria-selected="false">
-            <code>mcpane view</code> <span>→ view</span>
+            <code>supertools view</code> <span>→ view</span>
           </button>
         </div>
 
@@ -358,7 +358,7 @@
           <p class="section-kicker">Model Context Protocol</p>
           <h2>One stdio MCP server, three tools.</h2>
           <p class="section-desc">
-            Run <code>mcpane --mcp</code> to speak newline-delimited JSON-RPC 2.0 (protocol <code>2025-06-18</code>) on stdin/stdout. It serves <code>pick</code>, <code>draw</code>, and <code>view</code>, spawning a fresh window process per call.
+            Run <code>supertools --mcp</code> to speak newline-delimited JSON-RPC 2.0 (protocol <code>2025-06-18</code>) on stdin/stdout. It serves <code>pick</code>, <code>draw</code>, and <code>view</code>, spawning a fresh window process per call.
           </p>
         </div>
 
@@ -422,7 +422,7 @@
                   <pre class="trace-pre" id="trace-req"></pre>
                 </div>
                 <div class="trace-block">
-                  <div class="trace-dir">mcpane --mcp → stdout</div>
+                  <div class="trace-dir">supertools --mcp → stdout</div>
                   <pre class="trace-pre" id="trace-res"></pre>
                 </div>
               </div>
@@ -448,11 +448,11 @@
             <h3>Build from source</h3>
             <p>
               Source and build instructions live at
-              <a class="text-link" href="https://github.com/ricardobeat/mcpane" target="_blank" rel="noopener noreferrer">github.com/ricardobeat/mcpane</a>.
+              <a class="text-link" href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">github.com/ricardobeat/supertools</a>.
             </p>
           </div>
           <div class="build-actions">
-            <a class="btn btn-ghost btn-sm" href="https://github.com/ricardobeat/mcpane" target="_blank" rel="noopener noreferrer">
+            <a class="btn btn-ghost btn-sm" href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">
               View on GitHub ↗
             </a>
           </div>
@@ -467,7 +467,7 @@
         <span class="brand-glyph brand-glyph-sm" aria-hidden="true">
           <span></span><span class="active"></span><span></span><span></span>
         </span>
-        <span>mcpane</span>
+        <span>supertools</span>
         <span class="sep">·</span>
         <span class="muted">Small desktop windows for agents</span>
       </div>
@@ -475,7 +475,7 @@
         <a href="#demo">Live demo</a>
         <a href="#playground">Playground</a>
         <a href="#mcp">MCP</a>
-        <a href="https://github.com/ricardobeat/mcpane" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </div>
   </footer>

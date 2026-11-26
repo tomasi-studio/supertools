@@ -1,4 +1,4 @@
-/* Shared palette from src/avt/avt.c3 (lines 20-29) */
+/* Shared palette from src/supertools/supertools.c3 (lines 20-29) */
 :root {
   --bg-top: #16181f;
   --bg-bottom: #0c0d11;
@@ -527,7 +527,7 @@ kbd.is-pressed {
   border-color: var(--accent);
 }
 
-/* TUI SURFACE + FLOATING MCPANE WINDOW */
+/* TUI SURFACE + FLOATING SUPERTOOLS WINDOW */
 .desktop-canvas {
   position: relative;
   min-height: 540px;
@@ -693,7 +693,7 @@ kbd.is-pressed {
   to { visibility: hidden; }
 }
 
-/* PIXEL-FAITHFUL NATIVE MCPANE WINDOW */
+/* PIXEL-FAITHFUL NATIVE SUPERTOOLS WINDOW */
 .pk-window {
   position: relative;
   z-index: 2;

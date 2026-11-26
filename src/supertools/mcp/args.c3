@@ -1,5 +1,5 @@
 // Helpers the tools share for turning their arguments into a command line.
-module avt::mcp;
+module supertools::mcp;
 
 import view;
 import pointer;

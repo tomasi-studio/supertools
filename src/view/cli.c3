@@ -1,15 +1,15 @@
-// The `mcpane view` command line: parses the options, builds the model
+// The `supertools view` command line: parses the options, builds the model
 // and opens the window.
 module view;
 
-import avt;
+import supertools;
 import milktea;
 import milktea_gui;
 import std::io;
 
 fn void usage() {
 	io::eprintn(
-		`usage: mcpane view [options] IMAGE [--label S] [--desc S]...
+		`usage: supertools view [options] IMAGE [--label S] [--desc S]...
 Shows one to four images (layouts 1, 1-2, 1-2-3, 2x2) until Esc, Enter or
 Space closes the window. Prints nothing.
 
@@ -21,7 +21,7 @@ options:
 	);
 }
 
-// run is `mcpane view`: args[0] is the subcommand, options follow.
+// run is `supertools view`: args[0] is the subcommand, options follow.
 fn int run(String[] args) {
 	Model m;
 	String title = "View";
@@ -41,7 +41,7 @@ fn int run(String[] args) {
 				usage();
 				return 2;
 			default:
-				m.panels[m.n++].img = avt::load_image(a) ?? avt::placeholder();
+				m.panels[m.n++].img = supertools::load_image(a) ?? supertools::placeholder();
 		}
 	}
 	if (m.n == 0) {
@@ -50,6 +50,6 @@ fn int run(String[] args) {
 	}
 	int cols = m.n == 3 ? 150 : 110;
 	int rows = m.n == 4 ? 50 : m.n == 3 ? 34 : 42;
-	milktea_gui::run((milktea::Model)&m, avt::window(title, cols, rows));
+	milktea_gui::run((milktea::Model)&m, supertools::window(title, cols, rows));
 	return 0;
 }

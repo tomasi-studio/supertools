@@ -1,15 +1,15 @@
-// The `mcpane picker` command line: parses the options, builds the model
+// The `supertools picker` command line: parses the options, builds the model
 // and opens the window.
 module picker;
 
-import avt;
+import supertools;
 import milktea;
 import milktea_gui;
 import std::io;
 
 fn void usage() {
 	io::eprintn(
-		`usage: mcpane picker [options] ITEM...
+		`usage: supertools picker [options] ITEM...
 Shows the items in a grid; prints "<index>\t<label>" for the one clicked
 (or picked with arrows + Enter). Esc exits 1 with no output.
 
@@ -26,7 +26,7 @@ options:
 	);
 }
 
-// run is `mcpane picker`: args[0] is the subcommand, options follow.
+// run is `supertools picker`: args[0] is the subcommand, options follow.
 fn int run(String[] args) {
 	Model m = { .per_row = 3, .cols = 100 };
 	m.items.init(mem); // an uninitialised List would take the temp allocator
@@ -65,6 +65,6 @@ fn int run(String[] args) {
 	if (m.per_row < 1) m.per_row = 1;
 	if (m.cols < 30) m.cols = 30;
 	m.rows = m.first_rows();
-	milktea_gui::run((milktea::Model)&m, avt::window(title, (int)m.cols, (int)m.rows));
+	milktea_gui::run((milktea::Model)&m, supertools::window(title, (int)m.cols, (int)m.rows));
 	return 1;
 }

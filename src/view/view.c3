@@ -2,7 +2,7 @@
 // closes the window. Prints nothing.
 module view;
 
-import avt;
+import supertools;
 import milktea;
 import xray;
 import glaze;
@@ -37,13 +37,16 @@ fn milktea::Node* spacer(sz w) => milktea::vstack().width(xray::pixels(w));
 // shape, with the caption under it.
 fn milktea::Node* Panel.card(&self) {
 	milktea::Node* card = milktea::vstack().fill(1)
-		.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)))
+		.decorate(xray::solid(supertools::rgb(supertools::CARD)).round(10)
+			.with_border(1, supertools::rgb(supertools::EDGE)))
 		.add(xray::image(self.img, CONTAIN).fill(1));
 	if (self.title.len || self.desc.len) {
 		milktea::Node* text = milktea::vstack().fill(1);
-		if (self.title.len) text.add(milktea::text(self.title, glaze::style().foreground(avt::rgb(avt::INK))
+		if (self.title.len) text.add(milktea::text(self.title, glaze::style()
+			.foreground(supertools::rgb(supertools::INK))
 			.with_bold(true)));
-		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style().foreground(avt::rgb(avt::MUTED))));
+		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style()
+			.foreground(supertools::rgb(supertools::MUTED))));
 		card.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
 			.add(milktea::hstack().add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X)))
 			.add(milktea::vstack().height(xray::pixels(CAP_PAD)));
@@ -83,8 +86,9 @@ fn milktea::Node* Model.view(&self) @dynamic {
 		}
 		canvas.add(row.add(spacer(PAD)));
 	}
-	return milktea::vstack().decorate(avt::background())
-		.add(milktea::hstack().add(spacer(PAD)).add(avt::header(self.prompt, "esc, enter or space to close").fill(1))
+	return milktea::vstack().decorate(supertools::background())
+		.add(milktea::hstack().add(spacer(PAD))
+			.add(supertools::header(self.prompt, "esc, enter or space to close").fill(1))
 			.add(spacer(PAD)))
 		.add(canvas)
 		.add(milktea::vstack().height(xray::pixels(PAD)));

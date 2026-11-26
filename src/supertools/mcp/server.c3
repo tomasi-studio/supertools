@@ -2,9 +2,9 @@
 // tools. Claude Code starts it once per session; a tool call usually runs a
 // fresh process of the same binary for the window, since a window can only
 // run once per process, and turns its output into the tool result.
-module avt::mcp;
+module supertools::mcp;
 
-import avt;
+import supertools;
 import std::io;
 import std::core::dstring;
 import std::core::string;
@@ -31,7 +31,7 @@ struct Tool {
 // json_id appends a request's id the way it came: a number or a string.
 fn void json_id(DString* out, Object* id) @local {
 	if (id.is_string()) {
-		avt::json_str(out, id.s);
+		supertools::json_str(out, id.s);
 	} else if (id.is_int()) {
 		out.appendf("%d", id.i);
 	} else {
@@ -59,7 +59,7 @@ fn void reply_error(Object* id, int code, String message) @local {
 	out.append(`{"jsonrpc":"2.0","id":`);
 	json_id(&out, id);
 	out.appendf(`,"error":{"code":%d,"message":`, code);
-	avt::json_str(&out, message);
+	supertools::json_str(&out, message);
 	out.append("}}");
 	send(out.str_view());
 }
@@ -69,7 +69,7 @@ fn void reply_error(Object* id, int code, String message) @local {
 fn String tool_result(String structured, bool is_error = false) {
 	DString out = dstring::temp();
 	out.append(`{"content":[{"type":"text","text":`);
-	avt::json_str(&out, structured);
+	supertools::json_str(&out, structured);
 	out.append("}]");
 	if (!is_error) out.appendf(`,"structuredContent":%s`, structured);
 	if (is_error) out.append(`,"isError":true`);
@@ -82,7 +82,7 @@ fn String tool_result(String structured, bool is_error = false) {
 fn String tool_result_images(String structured, String[] pngs) {
 	DString out = dstring::temp();
 	out.append(`{"content":[{"type":"text","text":`);
-	avt::json_str(&out, structured);
+	supertools::json_str(&out, structured);
 	out.append('}');
 	foreach (path : pngs) {
 		char[]? data = file::load_temp(path);
@@ -98,7 +98,7 @@ fn String tool_result_images(String structured, String[] pngs) {
 fn String error_result(String message) {
 	DString s = dstring::temp();
 	s.append(`{"error":`);
-	avt::json_str(&s, message);
+	supertools::json_str(&s, message);
 	s.append('}');
 	return tool_result(s.str_view(), true);
 }
@@ -171,9 +171,9 @@ fn void handle(String server, Tool[] tools, String self_path, String line) @loca
 			if (try params = msg.get("params")) version = params.get_string("protocolVersion") ?? version;
 			DString r = dstring::temp();
 			r.append(`{"protocolVersion":`);
-			avt::json_str(&r, version);
+			supertools::json_str(&r, version);
 			r.append(`,"capabilities":{"tools":{}},"serverInfo":{"name":`);
-			avt::json_str(&r, server);
+			supertools::json_str(&r, server);
 			r.append(`,"version":"1.0.0"}}`);
 			reply(id, r.str_view());
 		case "ping":

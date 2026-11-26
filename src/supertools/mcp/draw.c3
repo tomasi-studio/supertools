@@ -1,5 +1,5 @@
-// The `draw` tool, served by `mcpane --mcp`.
-module avt::mcp;
+// The `draw` tool, served by `supertools --mcp`.
+module supertools::mcp;
 
 import pointer;
 import std::core::string;

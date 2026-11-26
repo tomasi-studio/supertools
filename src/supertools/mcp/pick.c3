@@ -1,7 +1,7 @@
-// The `pick` tool, served by `mcpane --mcp`.
-module avt::mcp;
+// The `pick` tool, served by `supertools --mcp`.
+module supertools::mcp;
 
-import avt;
+import supertools;
 import picker;
 import std::core::dstring;
 import std::core::string;
@@ -82,7 +82,7 @@ fn String call_pick(String self_path, Object* a) {
 	} else {
 		s.appendf(`{"choice":"option","index":%d,"label":`, index);
 	}
-	avt::json_str(&s, label);
+	supertools::json_str(&s, label);
 	s.append('}');
 	return tool_result(s.str_view());
 }

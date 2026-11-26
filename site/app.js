@@ -186,10 +186,10 @@
       name: "Claude Code",
       logo: "assets/logos/claude.svg",
       cliLabel: "Claude Code CLI",
-      cli: "claude mcp add mcpane -- /path/to/mcpane --mcp",
+      cli: "claude mcp add supertools -- /path/to/supertools --mcp",
       configLabel: ".mcp.json",
       config: JSON.stringify(
-        { mcpServers: { mcpane: { command: "/path/to/mcpane", args: ["--mcp"] } } },
+        { mcpServers: { supertools: { command: "/path/to/supertools", args: ["--mcp"] } } },
         null,
         2
       ),
@@ -201,7 +201,7 @@
       logo: "assets/logos/antigravity.svg",
       configLabel: "~/.gemini/config/mcp_config.json",
       config: JSON.stringify(
-        { mcpServers: { mcpane: { command: "/path/to/mcpane", args: ["--mcp"] } } },
+        { mcpServers: { supertools: { command: "/path/to/supertools", args: ["--mcp"] } } },
         null,
         2
       ),
@@ -212,9 +212,9 @@
       name: "Codex",
       logo: "assets/logos/codex.svg",
       cliLabel: "Codex CLI",
-      cli: "codex mcp add mcpane -- /path/to/mcpane --mcp",
+      cli: "codex mcp add supertools -- /path/to/supertools --mcp",
       configLabel: "~/.codex/config.toml",
-      config: '[mcp_servers.mcpane]\ncommand = "/path/to/mcpane"\nargs = ["--mcp"]',
+      config: '[mcp_servers.supertools]\ncommand = "/path/to/supertools"\nargs = ["--mcp"]',
       isJson: false,
     },
     {
@@ -223,7 +223,7 @@
       logo: "assets/logos/cursor.svg",
       configLabel: "~/.cursor/mcp.json",
       config: JSON.stringify(
-        { mcpServers: { mcpane: { command: "/path/to/mcpane", args: ["--mcp"] } } },
+        { mcpServers: { supertools: { command: "/path/to/supertools", args: ["--mcp"] } } },
         null,
         2
       ),
@@ -235,7 +235,7 @@
       logo: "assets/logos/gemini.svg",
       configLabel: "~/.gemini/settings.json",
       config: JSON.stringify(
-        { mcpServers: { mcpane: { command: "/path/to/mcpane", args: ["--mcp"] } } },
+        { mcpServers: { supertools: { command: "/path/to/supertools", args: ["--mcp"] } } },
         null,
         2
       ),
@@ -247,7 +247,7 @@
       logo: "assets/logos/opencode.svg",
       configLabel: "opencode.json",
       config: JSON.stringify(
-        { mcp: { mcpane: { type: "local", command: ["/path/to/mcpane", "--mcp"], enabled: true } } },
+        { mcp: { supertools: { type: "local", command: ["/path/to/supertools", "--mcp"], enabled: true } } },
         null,
         2
       ),
@@ -259,7 +259,7 @@
       logo: "assets/logos/zed.svg",
       configLabel: "~/.config/zed/settings.json",
       config: JSON.stringify(
-        { context_servers: { mcpane: { command: { path: "/path/to/mcpane", args: ["--mcp"] } } } },
+        { context_servers: { supertools: { command: { path: "/path/to/supertools", args: ["--mcp"] } } } },
         null,
         2
       ),
@@ -271,7 +271,7 @@
       logo: "assets/logos/copilot.svg",
       configLabel: ".vscode/mcp.json",
       config: JSON.stringify(
-        { servers: { mcpane: { type: "stdio", command: "/path/to/mcpane", args: ["--mcp"] } } },
+        { servers: { supertools: { type: "stdio", command: "/path/to/supertools", args: ["--mcp"] } } },
         null,
         2
       ),
@@ -279,7 +279,7 @@
     },
   ];
 
-  // Exact MCP JSON-RPC 2.0 traces from src/avt/mcp.c3, src/picker/mcp.c3, src/pointer/mcp.c3
+  // Exact MCP JSON-RPC 2.0 traces from src/supertools/mcp/
   const MCP_TRACES = {
     init: {
       req: {
@@ -298,7 +298,7 @@
         result: {
           protocolVersion: "2025-06-18",
           capabilities: { tools: {} },
-          serverInfo: { name: "mcpane", version: "1.0.0" },
+          serverInfo: { name: "supertools", version: "1.0.0" },
         },
       },
     },
@@ -524,8 +524,8 @@
         flags.push(["--card", shellQuote(it.cliImage || it.image || ""), shellQuote(it.title || ""), shellQuote(it.desc || "")]);
       }
     }
-    if (!multiline) return ["mcpane", "picker", ...flags.flat()].join(" ");
-    return "mcpane picker \\\n" + flags.map((f) => "  " + f.join(" ")).join(" \\\n");
+    if (!multiline) return ["supertools", "picker", ...flags.flat()].join(" ");
+    return "supertools picker \\\n" + flags.map((f) => "  " + f.join(" ")).join(" \\\n");
   }
 
   function buildPointerCli(subcmd, cfg, multiline = false) {
@@ -541,8 +541,8 @@
       if (p.desc) line.push("--desc", shellQuote(p.desc));
       flags.push(line);
     }
-    if (!multiline) return ["mcpane", subcmd, ...flags.flat()].join(" ");
-    return `mcpane ${subcmd} \\\n` + flags.map((f) => "  " + f.join(" ")).join(" \\\n");
+    if (!multiline) return ["supertools", subcmd, ...flags.flat()].join(" ");
+    return `supertools ${subcmd} \\\n` + flags.map((f) => "  " + f.join(" ")).join(" \\\n");
   }
 
   function buildPickMcpArgs(cfg) {
@@ -970,10 +970,10 @@
         addTool("Bash", "cargo run --bin render-splash -- --all");
         addSub("wrote build/renders/monolith.png, prism.png, topo.png");
       }
-      addTool("mcpane · pick", `(prompt: "${preset.prompt}", items: ${preset.items.length})`);
+      addTool("supertools · pick", `(prompt: "${preset.prompt}", items: ${preset.items.length})`);
       if (!hero.exited) {
         addSub("desktop window open — blocking until selection…", "is-wait");
-        els.termInputStatus.textContent = "blocked on mcpane · pick…";
+        els.termInputStatus.textContent = "blocked on supertools · pick…";
       } else if (hero.exited.kind === "cancelled") {
         addSub('{"choice":"cancelled"}', "is-warn");
         addAgent("Cancelled. Leaving files untouched.");
@@ -991,14 +991,14 @@
       const preset = DRAW_PRESETS[hero.drawPreset];
       els.termTitle.textContent = "~/projects/renderer — codex";
       addUser("Open the shader captures so I can circle the artifact to fix");
-      addTool("mcpane · draw", `(prompt: "${preset.prompt}", images: ${preset.panels.length}, color: "${SWATCHES[hero.drawColor].name}")`);
+      addTool("supertools · draw", `(prompt: "${preset.prompt}", images: ${preset.panels.length}, color: "${SWATCHES[hero.drawColor].name}")`);
       if (!hero.exited) {
         const n = hero.drawStrokes.length;
         addSub(
           n ? `${n} stroke${n === 1 ? "" : "s"} in progress — waiting for Done…` : "desktop window open — waiting for pointer annotations…",
           "is-wait"
         );
-        els.termInputStatus.textContent = "blocked on mcpane · draw…";
+        els.termInputStatus.textContent = "blocked on supertools · draw…";
       } else if (hero.exited.kind === "cancelled") {
         addSub('{"cancelled":true}', "is-warn");
         addAgent("Annotation cancelled. No edits queued.");
@@ -1017,7 +1017,7 @@
       addUser("Run the tone-mapping pass and pop up the output when done");
       addTool("Bash", "cargo run --bin render-diff");
       addSub(`wrote ${preset.panels.length} frame${preset.panels.length === 1 ? "" : "s"} in 1.4s`);
-      addTool("mcpane · view", `(prompt: "${preset.prompt}", images: ${preset.panels.length})`);
+      addTool("supertools · view", `(prompt: "${preset.prompt}", images: ${preset.panels.length})`);
       addSub('{"shown":true}  (returned immediately — background window)', "is-ok");
       addAgent(
         hero.exited

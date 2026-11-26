@@ -1,6 +1,6 @@
-// avt: what the agent visual tools share: the palette, the window setup,
-// image loading, and the MCP server plumbing (see mcp.c3).
-module avt;
+// supertools: what the agent visual tools share: the palette, the window setup,
+// image loading, and the MCP server (see mcp/).
+module supertools;
 
 import milktea;
 import milktea_gui;
@@ -11,8 +11,8 @@ import std::core::dstring;
 import std::os::env;
 import stb_image;
 
-extern fn char* avt_load_image(ZString path, CInt* w, CInt* h);
-extern fn void avt_free(void* p);
+extern fn char* supertools_load_image(ZString path, CInt* w, CInt* h);
+extern fn void supertools_free(void* p);
 extern fn CInt stbi_write_png(ZString path, CInt w, CInt h, CInt comp, void* data, iptr stride);
 
 const int CELL_W = 10;
@@ -38,9 +38,9 @@ fn xray::Decoration background() => xray::linear(rgb(BG_TOP), rgb(BG_BOTTOM));
 // ImageIO lacks (TGA, HDR, PNM, PIC).
 fn xray::Image*? load_image(String path) {
 	CInt w, h;
-	char* px = avt_load_image(path.zstr_tcopy(), &w, &h);
+	char* px = supertools_load_image(path.zstr_tcopy(), &w, &h);
 	if (px) {
-		defer avt_free(px);
+		defer supertools_free(px);
 		return xray::new_image(px[:(sz)w * h * 4], w, h);
 	}
 	int sw, sh, n;
@@ -115,11 +115,11 @@ fn milktea::Node* button(String label, xray::ClickFn on_click, bool primary = fa
 
 // window is the options every tool's window shares: borderless, rounded,
 // dragged by its top row, and kept above other windows. Pass it to
-// milktea_gui::run. With AVT_SCREENSHOT set, the first frame is written to
+// milktea_gui::run. With SUPERTOOLS_SCREENSHOT set, the first frame is written to
 // that PNG instead.
 fn milktea_gui::GuiOptions window(String title, int cols, int rows) {
 	return {
-		.screenshot_path = env::tget_var("AVT_SCREENSHOT") ?? "",
+		.screenshot_path = env::tget_var("SUPERTOOLS_SCREENSHOT") ?? "",
 		.title = title,
 		.cols = cols,
 		.rows = rows,

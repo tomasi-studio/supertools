@@ -5,7 +5,7 @@
   "features": ["NO_CONTROL"],
   "linked-libraries": ["z"],
   "targets": {
-    "mcpane": {
+    "supertools": {
       "type": "executable",
       "opt": "O2",
       "sources": [
@@ -14,7 +14,7 @@
         "../milktea/xray/**", "../milktea/src/**", "../milktea/gui/**"
       ],
       "c-sources": [
-        "src/avt/image.m", "src/avt/stb_image_write_impl.c",
+        "src/supertools/image.m", "src/supertools/stb_image_write_impl.c",
         "../milktea/examples/lib/stb_image_impl.c",
         "../milktea/milktea/tty_winsize.c",
         "../milktea/gui/backend.m", "../milktea/gui/platform_macos.m"

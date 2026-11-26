@@ -2,7 +2,7 @@
 // strokes into their pixels.
 module pointer;
 
-import avt;
+import supertools;
 import milktea;
 import xray;
 import glaze;
@@ -94,7 +94,7 @@ fn void Model.repaint(&self) {
 // load reads an image and makes its work copy, shrunk to WORK_MAX across.
 fn Panel load(String path) {
 	Panel p           = { .path = path };
-	xray::Image* full = avt::load_image(path) ?? avt::placeholder();
+	xray::Image* full = supertools::load_image(path) ?? supertools::placeholder();
 	p.width = full.width;
 	p.height = full.height;
 	sz big = full.width > full.height ? full.width : full.height;

@@ -3,7 +3,7 @@
 // or "Done" finishes; Esc cancels: nothing is printed and the exit code is 1.
 module pointer;
 
-import avt;
+import supertools;
 import milktea;
 import xray;
 import glaze;
@@ -143,9 +143,9 @@ fn milktea::Node* spacer(sz w) => milktea::vstack().width(xray::pixels(w));
 
 fn milktea::Node* Model.swatch(&self, sz i) {
 	bool on = i == self.color;
-	xray::Decoration d = xray::solid(avt::rgb(SWATCHES[i].hex)).round((float)DOT / 2)
-		.with_border(1, avt::rgba(0xffffff, 60));
-	if (on) d = d.with_shadow(0, 0, 0, avt::rgb(avt::ACCENT), 3);
+	xray::Decoration d = xray::solid(supertools::rgb(SWATCHES[i].hex)).round((float)DOT / 2)
+		.with_border(1, supertools::rgba(0xffffff, 60));
+	if (on) d = d.with_shadow(0, 0, 0, supertools::rgb(supertools::ACCENT), 3);
 	return milktea::vstack().width(xray::pixels(DOT)).height(xray::pixels(DOT)).decorate(d).ref_index(i)
 		.pointer(xray::PointerShape.HAND)
 		.on_click(&swatch_clicked);
@@ -155,13 +155,16 @@ fn milktea::Node* Model.swatch(&self, sz i) {
 // shape, with the caption under it. The image takes presses and drags.
 fn milktea::Node* Panel.card(&self) {
 	milktea::Node* card = milktea::vstack().fill(1)
-		.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)))
+		.decorate(xray::solid(supertools::rgb(supertools::CARD)).round(10)
+			.with_border(1, supertools::rgb(supertools::EDGE)))
 		.add(xray::image(self.img, CONTAIN).fill(1).ref(self).on_click(&image_pressed).on_drag(&image_dragged));
 	if (self.title.len || self.desc.len) {
 		milktea::Node* text = milktea::vstack().fill(1);
-		if (self.title.len) text.add(milktea::text(self.title, glaze::style().foreground(avt::rgb(avt::INK))
+		if (self.title.len) text.add(milktea::text(self.title, glaze::style()
+			.foreground(supertools::rgb(supertools::INK))
 			.with_bold(true)));
-		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style().foreground(avt::rgb(avt::MUTED))));
+		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style()
+			.foreground(supertools::rgb(supertools::MUTED))));
 		card.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
 			.add(milktea::hstack().add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X)))
 			.add(milktea::vstack().height(xray::pixels(CAP_PAD)));
@@ -204,7 +207,7 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 
 fn milktea::Node* Model.view(&self) @dynamic {
 	String hint = "Draw on the images  ·  1-5 colour  ·  u undo  ·  c clear  ·  enter done  ·  esc cancel";
-	milktea::Node* top = milktea::hstack().add(spacer(PAD)).add(avt::header(self.prompt, hint).fill(1))
+	milktea::Node* top = milktea::hstack().add(spacer(PAD)).add(supertools::header(self.prompt, hint).fill(1))
 		.add(spacer(PAD));
 
 	milktea::Node* canvas = milktea::vstack().fill(1);
@@ -229,12 +232,12 @@ fn milktea::Node* Model.view(&self) @dynamic {
 		.add(spacer(PAD))
 		.add(dots)
 		.add(milktea::vstack().fill(1))
-		.add(avt::button("Undo", &undo_clicked))
+		.add(supertools::button("Undo", &undo_clicked))
 		.add(spacer(8))
-		.add(avt::button("Clear", &clear_clicked))
+		.add(supertools::button("Clear", &clear_clicked))
 		.add(spacer(8))
-		.add(avt::button("Done", &done_clicked, primary: true))
+		.add(supertools::button("Done", &done_clicked, primary: true))
 		.add(spacer(PAD));
 
-	return milktea::vstack().decorate(avt::background()).add(top).add(canvas).add(foot);
+	return milktea::vstack().decorate(supertools::background()).add(top).add(canvas).add(foot);
 }
