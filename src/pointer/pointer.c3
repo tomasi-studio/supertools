@@ -85,7 +85,6 @@ struct Model {
 	sz color;
 	bool drawing;
 	bool points; // print every stroke's points too
-	bool view_only; // `mcpane view`: show the images, nothing to draw or pick
 	int layout_tries; // frames redrawn in a row to settle the layout
 	float last_x, last_y; // last point added, points on screen
 }
@@ -357,9 +356,9 @@ fn milktea::Node* Model.swatch(&self, sz i) {
 // and its caption centred in it. The image takes presses and drags; the
 // slot is tagged, and given a pointer shape so it is kept as a click target
 // with its solved rect (see read_layout).
-fn milktea::Node* Panel.card(&self, bool drawable) {
+fn milktea::Node* Panel.card(&self) {
 	milktea::Node* image = xray::image(self.img, STRETCH).height(xray::pixels(self.ih));
-	if (drawable) image.ref(self).on_click(&image_pressed).on_drag(&image_dragged);
+	image.ref(self).on_click(&image_pressed).on_drag(&image_dragged);
 	milktea::Node* card = milktea::vstack().width(xray::pixels(self.iw)).add(image);
 	if (self.cap_h) {
 		milktea::Node* text = milktea::vstack().fill(1);
@@ -387,14 +386,6 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 			milktea::request_redraw(); // slots resize; read_layout refits
 		case KEY:
 			milktea::KeyMsg k = msg.key;
-			if (self.view_only) {
-				switch {
-					case k.code == ESC || k.code == ENTER || k.code == CTRL_C:
-					case k.code == RUNE && (k.rune == 'q' || k.rune == ' '):
-						libc::exit(0);
-				}
-				return null;
-			}
 			switch (k.code) {
 				case ESC:
 				case CTRL_C: libc::exit(1);
@@ -420,9 +411,7 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 
 fn milktea::Node* Model.view(&self) @dynamic {
 	self.read_layout();
-	String hint = self.view_only
-		? "esc, enter or space to close"
-		: "Draw on the images  ·  1-5 colour  ·  u undo  ·  c clear  ·  enter done  ·  esc cancel";
+	String hint = "Draw on the images  ·  1-5 colour  ·  u undo  ·  c clear  ·  enter done  ·  esc cancel";
 	milktea::Node* top = milktea::hstack()
 		.add(spacer(PAD))
 		.add(avt::header(self.prompt, hint).fill(1))
@@ -436,17 +425,9 @@ fn milktea::Node* Model.view(&self) @dynamic {
 		for (sz c = 0; c < per_row && r * per_row + c < self.n; c++) {
 			Panel* p = &self.panels[r * per_row + c];
 			if (c) row.add(spacer(GAP));
-			row.add(p.card(!self.view_only));
+			row.add(p.card());
 		}
 		canvas.add(row.add(spacer(PAD)));
-	}
-
-	if (self.view_only) {
-		return milktea::vstack()
-			.decorate(avt::background())
-			.add(top)
-			.add(canvas)
-			.add(milktea::vstack().height(xray::pixels(PAD)));
 	}
 
 	milktea::Node* dots = milktea::hstack().with_align(xray::AlignItems.ALIGN_CENTER);
@@ -496,19 +477,7 @@ fn Panel load(String path) {
 	return p;
 }
 
-fn void usage(bool view_only) {
-	if (view_only) {
-		io::eprintn(`usage: mcpane view [options] IMAGE [--label S] [--desc S]...
-Shows one to four images (layouts 1, 1-2, 1-2-3, 2x2) until Esc, Enter or
-Space closes the window. Prints nothing.
-
-options:
-  --prompt S    heading shown above the images
-  --title S     window title (default "View")
-  --label S     caption title for the image before it
-  --desc S      caption text for the image before it`);
-		return;
-	}
+fn void usage() {
 	io::eprintn(`usage: mcpane pointer [options] IMAGE [--label S] [--desc S]...
 Shows one to four images (layouts 1, 1-2, 1-2-3, 2x2) to draw on with the
 pointer. Enter or Done writes each marked-up image to a PNG in $TMPDIR and
@@ -527,15 +496,14 @@ options:
   --desc S      caption text for the image before it`);
 }
 
-// run is `mcpane pointer`, or `mcpane view` with view_only: args[0] is the
-// subcommand, options follow.
-fn int run(String[] args, bool view_only = false) {
-	Model m = { .color = 2, .view_only = view_only };
+// run is `mcpane pointer`: args[0] is the subcommand, options follow.
+fn int run(String[] args) {
+	Model m = { .color = 2 };
 	// Heap-backed: an uninitialised List takes the temp allocator, which
 	// milktea resets between frames.
 	m.strokes.init(mem);
 	g_model = &m;
-	String title = view_only ? "View" : "Draw";
+	String title = "Draw";
 	List{String} paths;
 	paths.init(mem);
 	String[MAX_IMAGES] titles;
@@ -548,14 +516,14 @@ fn int run(String[] args, bool view_only = false) {
 				m.prompt = args[++i];
 			case a == "--title" && left >= 1:
 				title = args[++i];
-			case a == "--points" && !view_only:
+			case a == "--points":
 				m.points = true;
-			case a == "--color" && left >= 1 && !view_only:
+			case a == "--color" && left >= 1:
 				String name = args[++i];
 				sz found = -1;
 				foreach (j, s : SWATCHES) if (s.name == name) found = j;
 				if (found < 0) {
-					usage(view_only);
+					usage();
 					return 2;
 				}
 				m.color = found;
@@ -563,18 +531,18 @@ fn int run(String[] args, bool view_only = false) {
 				String v = args[++i];
 				if (a == "--label") { titles[paths.len() - 1] = v; } else { descs[paths.len() - 1] = v; }
 			case a.starts_with("--"):
-				usage(view_only);
+				usage();
 				return 2;
 			default:
 				if (paths.len() == MAX_IMAGES) {
-					usage(view_only);
+					usage();
 					return 2;
 				}
 				paths.push(a);
 		}
 	}
 	if (paths.len() == 0 || paths.len() > MAX_IMAGES) {
-		usage(view_only);
+		usage();
 		return 2;
 	}
 	foreach (i, p : paths) {

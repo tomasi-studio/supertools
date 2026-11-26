@@ -1,4 +1,4 @@
-// The `draw` and `view` tools, served by `mcpane --mcp`.
+// The `draw` tool, served by `mcpane --mcp`.
 module pointer;
 
 import avt;
@@ -89,7 +89,7 @@ fn String image_args(Object* a, List{String}* argv) {
 	return "";
 }
 
-// common_args adds the options draw and view share.
+// common_args adds the window options.
 fn void common_args(Object* a, List{String}* argv) {
 	String prompt = avt::opt_string(a, "prompt");
 	if (prompt.len) { argv.push("--prompt"); argv.push(prompt); }
@@ -130,45 +130,3 @@ fn String call_draw(String self_path, Object* a) {
 }
 
 fn avt::Tool draw_tool() => { "draw", TOOL, &call_draw };
-
-const String VIEW_TOOL = `{
-  "name": "view",
-  "title": "Show images",
-  "description": "Show the user one to four images in a desktop window, with optional captions, and return at once: the window stays open until the user closes it (Esc, Enter or Space) and nothing comes back from it. Use it to put something you made or found in front of the user, e.g. a generated image, a screenshot or a before/after pair, when they should look at it but there is nothing to choose or mark. To have them choose, use pick; to have them point at something, use draw. Layouts: 1 image full size, 2 or 3 side by side, 4 as a 2x2 grid. Images are local files (PNG, JPEG, HEIC, WebP...).",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "images": {
-        "type": "array", "minItems": 1, "maxItems": 4,
-        "items": {
-          "oneOf": [
-            { "type": "string", "description": "Absolute path to an image file." },
-            { "type": "object", "properties": { "path": { "type": "string" }, "title": { "type": "string" }, "description": { "type": "string" } }, "required": ["path"] }
-          ]
-        },
-        "description": "The images, in order (left to right, then top to bottom): a path, or an object with a path and an optional caption title and description shown under the image."
-      },
-      "prompt": { "type": "string", "description": "Heading shown above the images." },
-      "title": { "type": "string", "description": "Window title." }
-    },
-    "required": ["images"]
-  }
-}`;
-
-// call_view opens the window in the background and returns: nothing is
-// asked of the user, so there is nothing to wait for.
-fn String call_view(String self_path, Object* a) {
-	List{String} argv;
-	argv.tinit();
-	argv.push(self_path);
-	argv.push("view");
-	common_args(a, &argv);
-	String err = image_args(a, &argv);
-	if (err.len) return avt::error_result(err);
-	if (catch e = avt::start_self(argv.array_view())) {
-		return avt::error_result(string::tformat("could not open the window: %s", e));
-	}
-	return avt::tool_result(`{"shown":true}`);
-}
-
-fn avt::Tool view_tool() => { "view", VIEW_TOOL, &call_view };

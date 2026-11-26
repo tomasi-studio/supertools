@@ -6,6 +6,7 @@ module mcpane;
 import avt;
 import picker;
 import pointer;
+import view;
 import std::io;
 
 fn void usage() {
@@ -26,11 +27,11 @@ fn int main(String[] args) {
 	}
 	switch (args[1]) {
 		case "--mcp":
-			avt::Tool[3] tools = { picker::tool(), pointer::draw_tool(), pointer::view_tool() };
+			avt::Tool[3] tools = { picker::tool(), pointer::draw_tool(), view::tool() };
 			return avt::serve("mcpane", &tools, args[0]);
 		case "picker": return picker::run(args[1..]);
 		case "pointer": return pointer::run(args[1..]);
-		case "view": return pointer::run(args[1..], view_only: true);
+		case "view": return view::run(args[1..]);
 		case "-h":
 		case "--help":
 		case "help":
