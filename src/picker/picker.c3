@@ -38,62 +38,58 @@ struct Model {
 	sz rows;
 	sz sel;
 	sz scroll; // grid rows scrolled off the top
+	bool follow; // scroll until the selected tile is in view
 }
 
 Model* g_model;
 
 fn sz Model.header_h(&self) => self.prompt.len > 0 ? 5 : 4;
 
-fn sz Model.tile_w(&self) {
-	sz w = (self.cols - 2 * PAD_X - GAP_X * (self.per_row - 1)) / self.per_row;
-	return w < 6 ? 6 : w;
+// first_rows is a guess at the window's opening height, in cells: there is
+// no window to solve the layout in yet. Past it, layout sizes everything,
+// and a grid that does not fit scrolls.
+fn sz Model.first_rows(&self) {
+	sz tile_w = (self.cols - 2 * PAD_X) / self.per_row - GAP_X - 2 * CARD_PAD_X;
+	sz h = self.header_h();
+	for (sz r = 0; r < self.grid_rows(); r++) {
+		sz row = 1;
+		for (sz i = r * self.per_row; i < (r + 1) * self.per_row && i < (sz)self.items.len(); i++) {
+			Item* it = &self.items[i];
+			sz ih = glaze::wrapped_line_count(it.title, tile_w) + glaze::wrapped_line_count(it.desc, tile_w);
+			if (it.image.len) ih += tile_w / 2 + 1;
+			if (ih > row) row = ih;
+		}
+		h += row + 2 * CARD_PAD_Y + GAP_Y;
+	}
+	return h > 44 ? 44 : h;
 }
-// Content width inside a tile's padding, in cells.
-fn sz Model.inner_w(&self) => self.tile_w() - 2 * CARD_PAD_X;
-fn sz Model.img_rows(&self) => (self.inner_w() + 1) / 2;
 
 fn sz Model.grid_rows(&self) => (self.items.len() + self.per_row - 1) / self.per_row;
 
-// inner_h estimates how many cell rows an item's content takes. Layout does
-// its own sizing; this only sets the window's first height and scrolling.
-fn sz Model.inner_h(&self, Item* it) {
-	sz w = self.inner_w();
-	switch (it.kind) {
-		case TEXT: return glaze::wrapped_line_count(it.title, w);
-		case IMAGE: return self.img_rows();
-		case CARD:
-			sz h = glaze::wrapped_line_count(it.title, w);
-			if (it.desc.len > 0) h += glaze::wrapped_line_count(it.desc, w);
-			if (it.image.len > 0) h += self.img_rows() + 1;
-			return h;
-	}
-}
-
-// row_h estimates grid row r's height in cell rows, padding included.
-fn sz Model.row_h(&self, sz r) {
-	sz h = 1;
-	for (sz i = r * self.per_row; i < (r + 1) * self.per_row && i < (sz)self.items.len(); i++) {
-		sz ih = self.inner_h(&self.items[i]);
-		if (ih > h) h = ih;
-	}
-	return h + 2 * CARD_PAD_Y;
-}
-
-fn sz Model.content_h(&self) {
-	sz h = 0;
-	for (sz r = 0; r < self.grid_rows(); r++) h += self.row_h(r) + GAP_Y;
-	return h;
-}
-
+// keep_visible scrolls the selected tile into view after a key moved it,
+// one grid row a frame, going by where layout put the tile and the window
+// (both click targets) on the last frame.
 fn void Model.keep_visible(&self) {
+	if (!self.follow) return;
 	sz target = self.sel / self.per_row;
-	if (target < self.scroll) self.scroll = target;
-	sz room = self.rows - self.header_h() - 1;
-	while (self.scroll < target) {
-		sz h = 0;
-		for (sz r = self.scroll; r <= target; r++) h += self.row_h(r) + GAP_Y;
-		if (h <= room) break;
+	if (target <= self.scroll) {
+		self.scroll = target;
+		self.follow = false;
+		return;
+	}
+	xray::Rect tile;
+	xray::Rect win;
+	foreach (t : milktea::g_program.click_targets.array_view()) {
+		if (t.id_ptr == &self.items[self.sel]) tile = t.rect;
+		if (t.id_ptr == &self.scroll) win = t.rect;
+	}
+	// Layout squeezes what runs past the window into it, so a tile cut off
+	// at the bottom ends exactly at the window's edge, or has no room at all.
+	if (win.h && (!tile.h || tile.y + tile.h >= win.y + win.h)) {
 		self.scroll++;
+		milktea::request_redraw();
+	} else {
+		self.follow = false;
 	}
 }
 
@@ -131,7 +127,6 @@ fn void tile_clicked(void* id, String id_str, sz col, sz row) {
 // thumb is an item's image as a square-ish rounded picture across the tile.
 fn milktea::Node* Model.thumb(&self, Item* it) {
 	return xray::image(self.picture(it))
-		.height(milktea::cells(self.img_rows()))
 		.decorate(xray::solid(avt::rgb(0x000000)).round(8));
 }
 
@@ -194,7 +189,7 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 				case RUNE: if (msg.key.rune == 'q') libc::exit(1);
 				default:
 			}
-			self.keep_visible();
+			self.follow = true;
 		case MOUSE:
 			if (msg.mouse.button == MOUSE_WHEEL_UP) self.scroll_by(-1);
 			if (msg.mouse.button == MOUSE_WHEEL_DOWN) self.scroll_by(1);
@@ -207,6 +202,7 @@ fn milktea::Node* Model.view(&self) @dynamic {
 	milktea::Node* top = avt::header(self.prompt, "Click to choose  ·  arrows + enter  ·  esc to cancel",
 		self.none.len > 0 ? avt::button(self.none, &none_clicked) : null);
 
+	self.keep_visible();
 	milktea::Node* grid = milktea::vstack().with_gap(GAP_Y);
 	for (sz r = self.scroll; r < self.grid_rows(); r++) {
 		milktea::Node* row = milktea::hstack().with_gap(GAP_X);
@@ -220,6 +216,7 @@ fn milktea::Node* Model.view(&self) @dynamic {
 	return milktea::vstack()
 		.with_padding(0, PAD_X, 0, PAD_X)
 		.decorate(avt::background())
+		.ref(&self.scroll).pointer(xray::PointerShape.ARROW) // a target: keep_visible reads its rect
 		.add(top)
 		.add(grid);
 }
@@ -279,8 +276,7 @@ fn int run(String[] args) {
 	}
 	if (m.per_row < 1) m.per_row = 1;
 	if (m.cols < 30) m.cols = 30;
-	m.rows = m.header_h() + m.content_h();
-	if (m.rows > 44) m.rows = 44;
+	m.rows = m.first_rows();
 	avt::run((milktea::Model)&m, title, (int)m.cols, (int)m.rows);
 	return 1;
 }
