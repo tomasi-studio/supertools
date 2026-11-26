@@ -58,24 +58,11 @@ struct Panel {
 	char[] base;      // img's pixels with nothing drawn
 	String title;     // optional caption under the image
 	String desc;
-	sz slot_w, slot_h; // the panel's share of the window as last solved, points
-	sz iw, ih;         // the size the image is shown at, to fit its slot
-	sz cap_h;          // caption height under the image, points
+	float iw;         // the width the image was last shown at, points
 }
 
 const sz CAP_PAD = 10; // above and below a caption, points
 const sz CAP_PAD_X = 12;
-
-// caption_h is the caption's height for an image w points wide.
-fn sz Panel.caption_h(&self, sz w) {
-	if (!self.title.len && !self.desc.len) return 0;
-	sz cols = (w - 2 * CAP_PAD_X) / avt::CELL_W;
-	if (cols < 4) cols = 4;
-	sz lines = 0;
-	if (self.title.len) lines += glaze::wrapped_line_count(self.title, cols);
-	if (self.desc.len) lines += glaze::wrapped_line_count(self.desc, cols);
-	return lines * avt::CELL_H + 2 * CAP_PAD;
-}
 
 struct Model {
 	Panel[MAX_IMAGES] panels;
@@ -85,57 +72,25 @@ struct Model {
 	sz color;
 	bool drawing;
 	bool points; // print every stroke's points too
-	int layout_tries; // frames redrawn in a row to settle the layout
 	float last_x, last_y; // last point added, points on screen
 }
 
 Model* g_model;
 
-// fit sizes the image to its slot: as big as it goes while keeping its
-// shape, with room for the caption under it. The caption's height depends
-// on the image's width, which depends on the room the caption leaves. (The
-// layout has no aspect-fit constraint, so this part is ours.)
-fn void Panel.fit(&self) {
-	float ox, oy, dw, dh;
-	sz cap = self.caption_h(self.slot_w);
-	for (int pass = 0; pass < 2; pass++) {
-		sz room = math::max(self.slot_h - cap, (sz)20);
-		self.img.placement(CONTAIN, (float)self.slot_w, (float)room, &ox, &oy, &dw, &dh);
-		sz again = self.caption_h((sz)dw);
-		if (again <= cap) break;
-		cap = again;
-	}
-	self.cap_h = cap;
-	self.iw = math::max((sz)dw, (sz)1);
-	self.ih = math::max((sz)dh, (sz)1);
-}
-
-// read_layout picks up each slot's size as the last frame solved it, from
-// the click targets (a slot is tagged with ref(&slot_w)). A slot that
-// changed size refits its image and asks for another frame.
-fn void Model.read_layout(&self) {
-	bool refit = false;
-	foreach (t : milktea::g_program.click_targets.array_view()) {
-		for (sz i = 0; i < self.n; i++) {
-			Panel* p = &self.panels[i];
-			if (t.id_ptr == &p.slot_w && (t.rect.w != p.slot_w || t.rect.h != p.slot_h)) {
-				p.slot_w = t.rect.w;
-				p.slot_h = t.rect.h;
-				p.fit();
-				refit = true;
-			}
-		}
-	}
-	// The first frame has nothing solved yet: draw again once it has.
-	for (sz i = 0; i < self.n; i++) if (!self.panels[i].slot_w) refit = true;
-	if (refit && self.layout_tries++ < 4) milktea::request_redraw();
-	if (!refit) self.layout_tries = 0;
-}
-
 // to_work turns a point local to the panel's image node into work image
-// pixels, clamped to the image.
+// pixels, clamped to the image. The node is as layout solved it (a click
+// target, since it takes presses); the image sits in it as CONTAIN put it.
 fn Point Panel.to_work(&self, float x, float y) {
-	float k = (float)self.img.width / (float)self.iw;
+	foreach (t : milktea::g_program.click_targets.array_view()) {
+		if (t.id_ptr != self) continue;
+		float ox, oy, dw, dh;
+		self.img.placement(CONTAIN, (float)t.rect.w, (float)t.rect.h, &ox, &oy, &dw, &dh);
+		if (dw >= 1) self.iw = dw;
+		x -= ox;
+		y -= oy;
+		break;
+	}
+	float k = (float)self.img.width / math::max(self.iw, 1.0f);
 	return { math::clamp(x * k, 0.0f, (float)self.img.width - 1), math::clamp(y * k, 0.0f, (float)self.img.height - 1) };
 }
 
@@ -172,7 +127,7 @@ fn void Panel.stamp(&self, Point a, Point b, float r, uint hex) {
 	milktea::request_redraw();
 }
 
-fn float Panel.brush(&self) => BRUSH * (float)self.img.width / (float)math::max(self.iw, (sz)1);
+fn float Panel.brush(&self) => BRUSH * (float)self.img.width / math::max(self.iw, 1.0f);
 
 fn void Model.paint_segment(&self, Stroke* s, sz from) {
 	Panel* p = &self.panels[s.panel];
@@ -266,7 +221,7 @@ fn void Model.describe(&self, DString* out, Stroke* s) {
 		len += math::sqrt((double)((o[0] - prev[0]) * (o[0] - prev[0]) + (o[1] - prev[1]) * (o[1] - prev[1])));
 		prev = o;
 	}
-	double per_pt = (double)p.width / (double)p.iw; // file pixels per screen point
+	double per_pt = (double)p.width / math::max((double)p.iw, 1.0); // file pixels per screen point
 	double extent = (double)math::max(x1 - x0, y1 - y0);
 	double gap = math::sqrt((double)((last[0] - first[0]) * (last[0] - first[0]) + (last[1] - first[1]) * (last[1] - first[1])));
 	String kind = "line";
@@ -352,28 +307,22 @@ fn milktea::Node* Model.swatch(&self, sz i) {
 		.on_click(&swatch_clicked);
 }
 
-// card is a panel: a slot that takes its share of the row, with the image
-// and its caption centred in it. The image takes presses and drags; the
-// slot is tagged, and given a pointer shape so it is kept as a click target
-// with its solved rect (see read_layout).
+// card is a panel's share of the row: the image, as big as fits keeping its
+// shape, with the caption under it. The image takes presses and drags.
 fn milktea::Node* Panel.card(&self) {
-	milktea::Node* image = xray::image(self.img, STRETCH).height(xray::pixels(self.ih));
-	image.ref(self).on_click(&image_pressed).on_drag(&image_dragged);
-	milktea::Node* card = milktea::vstack().width(xray::pixels(self.iw)).add(image);
-	if (self.cap_h) {
+	milktea::Node* card = milktea::vstack().fill(1)
+		.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)))
+		.add(xray::image(self.img, CONTAIN).fill(1)
+			.ref(self).on_click(&image_pressed).on_drag(&image_dragged));
+	if (self.title.len || self.desc.len) {
 		milktea::Node* text = milktea::vstack().fill(1);
 		if (self.title.len) text.add(milktea::text(self.title, glaze::style().foreground(avt::rgb(avt::INK)).with_bold(true)));
 		if (self.desc.len) text.add(milktea::text(self.desc, glaze::style().foreground(avt::rgb(avt::MUTED))));
-		card.add(milktea::vstack().height(xray::pixels(self.cap_h))
-			.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
-			.add(milktea::hstack().fill(1).add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X))));
+		card.add(milktea::vstack().height(xray::pixels(CAP_PAD)))
+			.add(milktea::hstack().add(spacer(CAP_PAD_X)).add(text).add(spacer(CAP_PAD_X)))
+			.add(milktea::vstack().height(xray::pixels(CAP_PAD)));
 	}
-	card.decorate(xray::solid(avt::rgb(avt::CARD)).round(10).with_border(1, avt::rgb(avt::EDGE)));
-	return milktea::vstack().fill(1)
-		.with_justify(xray::JustifyContent.JUSTIFY_CENTER)
-		.with_align(xray::AlignItems.ALIGN_CENTER)
-		.ref(&self.slot_w).pointer(xray::PointerShape.ARROW)
-		.add(self.iw > 1 ? card : milktea::vstack());
+	return card;
 }
 
 fn milktea::Cmd Model.init(&self) @dynamic {
@@ -383,7 +332,7 @@ fn milktea::Cmd Model.init(&self) @dynamic {
 fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 	switch (msg.kind) {
 		case WINDOW_SIZE:
-			milktea::request_redraw(); // slots resize; read_layout refits
+			milktea::request_redraw();
 		case KEY:
 			milktea::KeyMsg k = msg.key;
 			switch (k.code) {
@@ -410,7 +359,6 @@ fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 }
 
 fn milktea::Node* Model.view(&self) @dynamic {
-	self.read_layout();
 	String hint = "Draw on the images  ·  1-5 colour  ·  u undo  ·  c clear  ·  enter done  ·  esc cancel";
 	milktea::Node* top = milktea::hstack()
 		.add(spacer(PAD))
