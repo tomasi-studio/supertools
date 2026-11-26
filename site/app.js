@@ -279,7 +279,7 @@
     },
   ];
 
-  // Exact MCP JSON-RPC 2.0 traces from src/supertools/mcp/
+  // Exact MCP JSON-RPC 2.0 traces from src/mcp/
   const MCP_TRACES = {
     init: {
       req: {
