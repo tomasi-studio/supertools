@@ -7,58 +7,7 @@ import std::collections::object;
 import std::collections::list;
 import std::encoding::json;
 
-const String TOOL = `{
-  "name": "draw",
-  "title": "Draw on images",
-  "description": "Show the user one to four images in a desktop window and let them draw on them with the pointer (circle, underline, point at, sketch), then return each marked-up image (attached, and saved as a PNG) plus a summary of every stroke in the image's own pixel coordinates: its colour, its kind (click, line, curve or loop) and its bounding box. Use it when the user needs to show you where something is, or mark up a screenshot, photo or design. Layouts: 1 image full size, 2 or 3 side by side, 4 as a 2x2 grid. Colours: black, white, red, yellow, cyan. Blocks until the user presses Done (or Enter) or cancels (Esc). Images are local files in any format macOS can decode (PNG, JPEG, HEIC, WebP...). Only use it in an interactive conversation where the user is present and waiting.",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "images": {
-        "type": "array", "minItems": 1, "maxItems": 4,
-        "items": {
-          "oneOf": [
-            { "type": "string", "description": "Absolute path to an image file." },
-            { "type": "object", "properties": { "path": { "type": "string" }, "title": { "type": "string" }, "description": { "type": "string" } }, "required": ["path"] }
-          ]
-        },
-        "description": "The images, in order (left to right, then top to bottom): a path, or an object with a path and an optional caption title and description shown under the image."
-      },
-      "prompt": { "type": "string", "description": "What to draw, shown above the images." },
-      "color": { "type": "string", "enum": ["black", "white", "red", "yellow", "cyan"], "description": "Starting colour (default red)." },
-      "title": { "type": "string", "description": "Window title." },
-      "points": { "type": "boolean", "description": "Also return every stroke's full point list (default false; the summary and marked-up images are usually enough)." }
-    },
-    "required": ["images"]
-  },
-  "outputSchema": {
-    "type": "object",
-    "properties": {
-      "cancelled": { "type": "boolean" },
-      "images": {
-        "type": "array",
-        "items": { "type": "object", "properties": { "path": { "type": "string" }, "width": { "type": "integer" }, "height": { "type": "integer" }, "marked": { "type": "string", "description": "PNG of the image with the strokes drawn on, when it has any." } } }
-      },
-      "strokes": {
-        "type": "array",
-        "description": "In drawing order. Coordinates are in the image's own pixels, origin top left.",
-        "items": {
-          "type": "object",
-          "properties": {
-            "image": { "type": "integer", "description": "0-based index into images." },
-            "color": { "type": "string" },
-            "kind": { "type": "string", "enum": ["click", "line", "curve", "loop"], "description": "loop: closed or nearly, circling something; line: straight; curve: open and bent." },
-            "at": { "type": "array", "items": { "type": "integer" }, "description": "For a click: [x, y]." },
-            "from": { "type": "array", "items": { "type": "integer" }, "description": "For a line or curve: start [x, y]." },
-            "to": { "type": "array", "items": { "type": "integer" }, "description": "For a line or curve: end [x, y]." },
-            "bbox": { "type": "array", "items": { "type": "integer" }, "description": "[x, y, width, height]." },
-            "points": { "type": "array", "items": { "type": "array", "items": { "type": "integer" } }, "description": "Only with points: true." }
-          }
-        }
-      }
-    }
-  }
-}`;
+const String TOOL = $embed("draw.json");
 
 // image_args checks a call's images and adds them to argv, each path
 // followed by its caption options. Returns an error message, or "".

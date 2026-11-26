@@ -7,43 +7,7 @@ import std::core::string;
 import std::collections::object;
 import std::collections::list;
 
-const String TOOL = `{
-  "name": "pick",
-  "title": "Visual picker",
-  "description": "Show the user a grid of options in a desktop window and wait for them to choose one. Use it when a choice is easier to make by seeing it than reading it: generated images, logos, screenshots, UI or design variants, or short labelled options. Blocks until the user picks, presses the 'none' button, or cancels (Esc). Images are local files in any format macOS can decode (PNG, JPEG, HEIC, WebP, AVIF, GIF, TIFF...); no SVG, PDF or URLs. Only use it in an interactive conversation where the user is present and waiting; never as part of a long-running or autonomous task, where the window would block with nobody to answer.",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "prompt": { "type": "string", "description": "The question, shown above the options." },
-      "items": {
-        "type": "array",
-        "minItems": 1,
-        "description": "The options, in order. An item with only an image is a picture tile; with only a title, a text tile; with both (and an optional description), a card.",
-        "items": {
-          "type": "object",
-          "properties": {
-            "image": { "type": "string", "description": "Absolute path to an image file." },
-            "title": { "type": "string" },
-            "description": { "type": "string" }
-          }
-        }
-      },
-      "columns": { "type": "integer", "minimum": 1, "description": "Tiles per row (default 3). Fewer columns make bigger tiles." },
-      "none": { "type": "string", "description": "Label for an optional button that rejects every option, e.g. 'None of these'." },
-      "title": { "type": "string", "description": "Window title." }
-    },
-    "required": ["items"]
-  },
-  "outputSchema": {
-    "type": "object",
-    "properties": {
-      "choice": { "type": "string", "enum": ["option", "none", "cancelled"] },
-      "index": { "type": "integer", "description": "0-based index into items, for choice 'option'." },
-      "label": { "type": "string", "description": "The chosen item's title (or image path)." }
-    },
-    "required": ["choice"]
-  }
-}`;
+const String TOOL = $embed("pick.json");
 
 // call_pick turns the tool's arguments into a picker command line, runs it,
 // and reads back the choice.

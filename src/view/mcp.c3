@@ -43,29 +43,7 @@ fn void common_args(Object* a, List{String}* argv) {
 	if (title.len) { argv.push("--title"); argv.push(title); }
 }
 
-const String TOOL = `{
-  "name": "view",
-  "title": "Show images",
-  "description": "Show the user one to four images in a desktop window, with optional captions, and return at once: the window stays open until the user closes it (Esc, Enter or Space) and nothing comes back from it. Use it to put something you made or found in front of the user, e.g. a generated image, a screenshot or a before/after pair, when they should look at it but there is nothing to choose or mark. To have them choose, use pick; to have them point at something, use draw. Layouts: 1 image full size, 2 or 3 side by side, 4 as a 2x2 grid. Images are local files (PNG, JPEG, HEIC, WebP...).",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "images": {
-        "type": "array", "minItems": 1, "maxItems": 4,
-        "items": {
-          "oneOf": [
-            { "type": "string", "description": "Absolute path to an image file." },
-            { "type": "object", "properties": { "path": { "type": "string" }, "title": { "type": "string" }, "description": { "type": "string" } }, "required": ["path"] }
-          ]
-        },
-        "description": "The images, in order (left to right, then top to bottom): a path, or an object with a path and an optional caption title and description shown under the image."
-      },
-      "prompt": { "type": "string", "description": "Heading shown above the images." },
-      "title": { "type": "string", "description": "Window title." }
-    },
-    "required": ["images"]
-  }
-}`;
+const String TOOL = $embed("view.json");
 
 // call_view opens the window in the background and returns: nothing is
 // asked of the user, so there is nothing to wait for.
