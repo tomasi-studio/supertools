@@ -50,7 +50,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
         run: |
-          gh repo clone tomasi-studio/homebrew-tap tap
+          gh repo clone tomasi-studio/homebrew-apps tap
           cd tap
           sed -i '' \
             -e "s|^  version \".*\"|  version \"$VERSION\"|" \
@@ -59,4 +59,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "supertools $VERSION"
-          git push "https://x-access-token:$GH_TOKEN@github.com/tomasi-studio/homebrew-tap.git" HEAD
+          git push "https://x-access-token:$GH_TOKEN@github.com/tomasi-studio/homebrew-apps.git" HEAD
