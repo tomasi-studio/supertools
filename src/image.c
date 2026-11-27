@@ -1,8 +1,12 @@
 // supertools_load_image decodes an image file with ImageIO into straight-alpha RGBA8 at its own
-// size. Returns a malloc'd buffer (free with supertools_free) or NULL.
+// size. Returns a malloc'd buffer (free with supertools_free) or NULL. Elsewhere there is no
+// ImageIO and it always returns NULL, leaving every file to stb_image (see load_image).
+#include <stdlib.h>
+#include <string.h>
+
+#if defined(__APPLE__)
 #include <ImageIO/ImageIO.h>
 #include <CoreGraphics/CoreGraphics.h>
-#include <stdlib.h>
 
 unsigned char *supertools_load_image(const char *path, int *out_w, int *out_h) {
 	CFURLRef url = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8 *)path, strlen(path), false);
@@ -31,5 +35,13 @@ unsigned char *supertools_load_image(const char *path, int *out_w, int *out_h) {
 	*out_h = h;
 	return px;
 }
+#else
+unsigned char *supertools_load_image(const char *path, int *out_w, int *out_h) {
+	(void)path;
+	(void)out_w;
+	(void)out_h;
+	return NULL;
+}
+#endif
 
 void supertools_free(void *p) { free(p); }

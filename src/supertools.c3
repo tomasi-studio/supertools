@@ -1,6 +1,6 @@
 // supertools: what the agent visual tools share: the palette, the window setup,
 // image loading, and the MCP server (see mcp/).
-module supertools;
+module supertools @link(env::DARWIN, "ImageIO.framework", "CoreGraphics.framework", "CoreFoundation.framework");
 
 import milktea;
 import milktea_gui;
@@ -34,8 +34,8 @@ fn xray::Color rgba(uint hex, char a) => xray::color_rgba((char)(hex >> 16), (ch
 
 fn xray::Decoration background() => xray::linear(rgb(BG_TOP), rgb(BG_BOTTOM));
 
-// load_image decodes a file with ImageIO, then with stb_image for what
-// ImageIO lacks (TGA, HDR, PNM, PIC).
+// load_image decodes a file with ImageIO on macOS, and with stb_image for
+// what ImageIO lacks (TGA, HDR, PNM, PIC) and on other systems.
 fn xray::Image*? load_image(String path) {
 	CInt w, h;
 	char* px = supertools_load_image(path.zstr_tcopy(), &w, &h);

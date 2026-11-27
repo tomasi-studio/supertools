@@ -11,8 +11,7 @@
       "type": "executable",
       "opt": "O2",
       "sources": ["src/**"],
-      "c-sources": ["src/image.m", "src/stb_image_write_impl.c", "src/vendor/stb_image_impl.c"],
-      "linked-libraries": ["ImageIO.framework", "CoreGraphics.framework", "CoreFoundation.framework"]
+      "c-sources": ["src/image.c", "src/stb_image_write_impl.c", "src/vendor/stb_image_impl.c"]
     }
   }
 }
