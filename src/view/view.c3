@@ -23,6 +23,9 @@ struct Panel {
 	xray::Image* img;
 	String title; // optional caption under the image
 	String desc;
+	supertools::Gif gif; // frames to cycle through, when the file is an animated GIF
+	sz frame;
+	sz due;              // frame_ms() at which the next frame shows
 }
 
 struct Model {
@@ -54,12 +57,53 @@ fn milktea::Node* Panel.card(&self) {
 	return card;
 }
 
+// load fills the panel from a file: an animated GIF plays, anything else
+// shows still.
+fn void Panel.load(&self, String path) {
+	if (try g = supertools::load_gif(path)) {
+		self.gif = g;
+		self.img = xray::new_image(g.frames[:g.width * g.height * 4], g.width, g.height);
+		return;
+	}
+	self.img = supertools::load_image(path) ?? supertools::placeholder();
+}
+
+fn bool Model.animated(&self) {
+	for (sz i = 0; i < self.n; i++) if (self.panels[i].gif.count) return true;
+	return false;
+}
+
+// advance moves every GIF on to the frame its time calls for.
+fn void Model.advance(&self) {
+	sz now = milktea::frame_ms();
+	for (sz i = 0; i < self.n; i++) {
+		Panel* p = &self.panels[i];
+		supertools::Gif* g = &p.gif;
+		if (!g.count) continue;
+		if (!p.due) p.due = now + g.delays[p.frame];
+		sz steps = 0;
+		while (now >= p.due && steps++ < g.count) {
+			p.frame = (p.frame + 1) % g.count;
+			p.due += g.delays[p.frame];
+		}
+		if (now >= p.due) p.due = now + g.delays[p.frame]; // far behind: skip ahead
+		if (steps) {
+			sz size = g.width * g.height * 4;
+			p.img.set_pixels(g.frames[p.frame * size:size]);
+		}
+	}
+}
+
 fn milktea::Cmd Model.init(&self) @dynamic {
-	return null;
+	return self.animated() ? milktea::tick(10) : null;
 }
 
 fn milktea::Cmd Model.update(&self, milktea::Msg msg) @dynamic {
 	switch (msg.kind) {
+		case TICK:
+			self.advance();
+			milktea::request_redraw();
+			return milktea::tick(10);
 		case WINDOW_SIZE:
 			milktea::request_redraw();
 		case KEY:

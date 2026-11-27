@@ -7,6 +7,7 @@ import milktea_gui;
 import xray;
 import glaze;
 import std::io;
+import std::io::file;
 import std::core::dstring;
 import std::os::env;
 import stb_image;
@@ -48,6 +49,36 @@ fn xray::Image*? load_image(String path) {
 	if (!spx) return io::FILE_NOT_VALID~;
 	defer stb_image::stbi_image_free(spx);
 	return xray::new_image(spx[:(sz)sw * sh * 4], sw, sh);
+}
+
+// Gif is every frame of an animated GIF, in one buffer of RGBA frames.
+struct Gif {
+	char[] frames;  // count * width * height * 4 bytes, straight alpha
+	int[] delays;   // ms each frame stays up
+	sz count;
+	sz width;
+	sz height;
+}
+
+// load_gif decodes every frame of a GIF file. Fails for other files, and
+// for a GIF with a single frame, which load_image handles.
+fn Gif? load_gif(String path) {
+	char[] data = file::load_temp(path)!;
+	if (data.len < 6 || (String)data[:3] != "GIF") return io::FILE_NOT_VALID~;
+	int w, h, n, comp;
+	int* delays;
+	char* px = stb_image::stbi_load_gif_from_memory(data.ptr, (int)data.len, &delays, &w, &h, &n, &comp, 4);
+	if (!px) return io::FILE_NOT_VALID~;
+	defer stb_image::stbi_image_free(px);
+	defer stb_image::stbi_image_free(delays);
+	if (n < 2) return io::FILE_NOT_VALID~;
+	sz total = (sz)n * w * h * 4;
+	Gif g = { .count = n, .width = w, .height = h };
+	g.frames = mem::new_array(char, total);
+	g.frames[..] = px[:total];
+	g.delays = mem::new_array(int, n);
+	for (sz i = 0; i < n; i++) g.delays[i] = delays[i] < 20 ? 100 : delays[i]; // browsers treat 0-10ms as 100ms
+	return g;
 }
 
 // json_str appends s as a JSON string literal.

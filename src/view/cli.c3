@@ -41,7 +41,7 @@ fn int run(String[] args) {
 				usage();
 				return 2;
 			default:
-				m.panels[m.n++].img = supertools::load_image(a) ?? supertools::placeholder();
+				m.panels[m.n++].load(a);
 		}
 	}
 	if (m.n == 0) {

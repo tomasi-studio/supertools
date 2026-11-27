@@ -4,3 +4,4 @@ extern fn char* stbi_load(char* filename, int* x, int* y, int* channels_in_file,
 extern fn void stbi_image_free(void* retval_from_stbi_load);
 extern fn void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
 extern fn char* stbi_load_from_memory(char* buffer, int len, int* x, int* y, int* channels_in_file, int desired_channels);
+extern fn char* stbi_load_gif_from_memory(char* buffer, int len, int** delays, int* x, int* y, int* z, int* comp, int req_comp);
