@@ -47,11 +47,16 @@
     `),
   };
 
-  // Sample artworks (720x720 PNGs in site/assets/)
+  // Sample artworks & captures (720x720 JPEGs in site/assets/)
   const ART = {
-    monolith: { src: "assets/art-monolith.png", path: "/tmp/art-monolith.png", w: 720, h: 720 },
-    prism: { src: "assets/art-prism.png", path: "/tmp/art-prism.png", w: 720, h: 720 },
-    topo: { src: "assets/art-topo.png", path: "/tmp/art-topo.png", w: 720, h: 720 },
+    monolith: { src: "assets/art-monolith.jpg", path: "/tmp/art-monolith.png", w: 720, h: 720 },
+    prism: { src: "assets/art-prism.jpg", path: "/tmp/art-prism.png", w: 720, h: 720 },
+    topo: { src: "assets/art-topo.jpg", path: "/tmp/art-topo.png", w: 720, h: 720 },
+    cap1: { src: "assets/cap-01.jpg", path: "/tmp/captures/frame-01.png", w: 720, h: 720 },
+    cap2: { src: "assets/cap-02.jpg", path: "/tmp/captures/frame-02.png", w: 720, h: 720 },
+    cap3: { src: "assets/cap-03.jpg", path: "/tmp/captures/frame-03.png", w: 720, h: 720 },
+    before: { src: "assets/tonemap-before.jpg", path: "/tmp/diff/before.png", w: 720, h: 720 },
+    after: { src: "assets/tonemap-after.jpg", path: "/tmp/diff/after.png", w: 720, h: 720 },
   };
 
   // =========================================================================
@@ -77,9 +82,9 @@
       cols: 3,
       none: "Skip image",
       items: [
-        { kind: "image", image: ART.monolith.src, cliImage: "/tmp/captures/frame-01.png" },
-        { kind: "image", image: ART.prism.src, cliImage: "/tmp/captures/frame-02.png" },
-        { kind: "image", image: ART.topo.src, cliImage: "/tmp/captures/frame-03.png" },
+        { kind: "image", image: ART.cap1.src, cliImage: "/tmp/captures/frame-01.png" },
+        { kind: "image", image: ART.cap2.src, cliImage: "/tmp/captures/frame-02.png" },
+        { kind: "image", image: ART.cap3.src, cliImage: "/tmp/captures/frame-03.png" },
       ],
     },
     logos: {
@@ -153,8 +158,8 @@
       pill: "2 images",
       prompt: "Shader pass before and after tone mapping",
       panels: [
-        { src: ART.monolith.src, path: "/tmp/diff/before.png", w: 720, h: 720, title: "Before", desc: "Linear output" },
-        { src: ART.prism.src, path: "/tmp/diff/after.png", w: 720, h: 720, title: "After", desc: "ACES tone map" },
+        { src: ART.before.src, path: "/tmp/diff/before.png", w: 720, h: 720, title: "Before", desc: "Linear output" },
+        { src: ART.after.src, path: "/tmp/diff/after.png", w: 720, h: 720, title: "After", desc: "ACES tone map" },
       ],
     },
     single: {
@@ -675,17 +680,9 @@
       stage.appendChild(img);
 
       let canvas = null;
-      let hint = null;
       if (drawable) {
         canvas = document.createElement("canvas");
         stage.appendChild(canvas);
-
-        if (idx === 0) {
-          hint = document.createElement("div");
-          hint.className = "ptr-draw-hint" + (strokes.length ? " is-gone" : "");
-          hint.textContent = "Drag to draw or click to mark";
-          stage.appendChild(hint);
-        }
 
         let activeStroke = null;
         const pointFromEvent = (e) => {
@@ -701,7 +698,6 @@
           canvas.setPointerCapture(e.pointerId);
           activeStroke = { panel: idx, color: getColor(), points: [pointFromEvent(e)] };
           strokes.push(activeStroke);
-          container.querySelectorAll(".ptr-draw-hint").forEach((h) => h.classList.add("is-gone"));
           paintOverlayCanvas(canvas, strokes, idx);
           onStrokesChange();
         });
@@ -788,9 +784,18 @@
     drawColor: 2,
     drawStrokes: [],
     drawRefs: [],
+    seqTimers: [],
+    lastResult: null,
+    lastFollowup: null,
   };
 
   const pgEls = {
+    previewWrap: document.getElementById("pg-preview-wrap"),
+    previewWin: document.getElementById("pg-preview-window"),
+    termBackdrop: document.getElementById("pg-term-backdrop"),
+    termTitle: document.getElementById("pg-term-title"),
+    termBody: document.getElementById("pg-term-body"),
+    termInputStatus: document.getElementById("pg-term-input-status"),
     presetTabs: document.getElementById("pg-preset-tabs"),
     pkPrompt: document.getElementById("pg-pk-prompt"),
     pkSub: document.getElementById("pg-pk-sub"),
@@ -802,9 +807,218 @@
     previewClear: document.getElementById("pg-preview-clear"),
     previewDone: document.getElementById("pg-preview-done"),
     toast: document.getElementById("pg-toast"),
+    reopenBtn: document.getElementById("pg-reopen-btn"),
     codeOut: document.getElementById("pg-code-output"),
     copyBtn: document.getElementById("pg-copy-btn"),
   };
+
+  const REDUCED_MOTION = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function pgTermScript() {
+    const cfg = currentPgConfig();
+    if (pg.tool === "pick") {
+      if (pg.pickPreset === "deploy") {
+        return {
+          title: "~/infra/deploy — claude",
+          user: "Prepare the release and ask me which environment to deploy to",
+          agent: "Build is green and 4 targets are ready — confirm where you want to ship.",
+          toolFn: "supertools · pick",
+          toolArg: `(prompt: "${cfg.prompt}", items: ${cfg.items.length})`,
+          waitSub: "desktop window open — blocking until selection…",
+          inputWait: "blocked on supertools · pick…",
+        };
+      }
+      if (pg.pickPreset === "logos") {
+        return {
+          title: "~/projects/app — claude",
+          user: "Export the four app icon variants so I can pick one",
+          agent: "Exported grid, aperture, brackets, and diamond — popping up the options now.",
+          toolFn: "supertools · pick",
+          toolArg: `(prompt: "${cfg.prompt}", items: ${cfg.items.length})`,
+          waitSub: "desktop window open — blocking until selection…",
+          inputWait: "blocked on supertools · pick…",
+        };
+      }
+      if (pg.pickPreset === "images") {
+        return {
+          title: "~/projects/renderer — claude",
+          user: "Grab the latest captures in /tmp/captures so I can pick one for the changelog",
+          agent: "Found 3 frames in /tmp/captures — opening them in a grid to choose.",
+          toolFn: "supertools · pick",
+          toolArg: `(prompt: "${cfg.prompt}", items: ${cfg.items.length})`,
+          waitSub: "desktop window open — blocking until selection…",
+          inputWait: "blocked on supertools · pick…",
+        };
+      }
+      return {
+        title: "~/projects/renderer — claude",
+        user: "Render all three splash shaders and let me pick which one to bundle",
+        agent: "Rendered monolith.png, prism.png, and topo.png — opening a picker so you can compare them.",
+        toolFn: "supertools · pick",
+        toolArg: `(prompt: "${cfg.prompt}", items: ${cfg.items.length})`,
+        waitSub: "desktop window open — blocking until selection…",
+        inputWait: "blocked on supertools · pick…",
+      };
+    }
+
+    if (pg.tool === "draw") {
+      if (pg.drawPreset === "compare") {
+        return {
+          title: "~/projects/renderer — codex",
+          user: "Compare main and feature/contours so I can mark any regressions",
+          agent: "Loaded both captures side by side — mark any areas that look off.",
+          toolFn: "supertools · draw",
+          toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length}, color: "${SWATCHES[pg.drawColor].name}")`,
+          waitSub: "desktop window open — waiting for annotations…",
+          inputWait: "blocked on supertools · draw…",
+        };
+      }
+      if (pg.drawPreset === "quad") {
+        return {
+          title: "~/projects/renderer — codex",
+          user: "Show all four camera angles so I can flag any clipping",
+          agent: "Rendered front, side, overhead, and exposure passes — draw directly on any clipping.",
+          toolFn: "supertools · draw",
+          toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length}, color: "${SWATCHES[pg.drawColor].name}")`,
+          waitSub: "desktop window open — waiting for annotations…",
+          inputWait: "blocked on supertools · draw…",
+        };
+      }
+      return {
+        title: "~/projects/renderer — codex",
+        user: "Open the prism shader render so I can circle the artifact to fix",
+        agent: "Opening prism.png — circle or point at the glitch and hit Done.",
+        toolFn: "supertools · draw",
+        toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length}, color: "${SWATCHES[pg.drawColor].name}")`,
+        waitSub: "desktop window open — waiting for annotations…",
+        inputWait: "blocked on supertools · draw…",
+      };
+    }
+
+    if (pg.viewPreset === "single") {
+      return {
+        title: "~/projects/renderer — pi",
+        user: "Export the heightmap pass and show me the result",
+        agent: "Saved build/renders/topo.png (720×720) — popping it up for a quick look.",
+        toolFn: "supertools · view",
+        toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length})`,
+        waitSub: '{"shown":true}  (returned immediately — background window)',
+        waitClass: "is-ok",
+        inputWait: "Ask a follow-up…",
+      };
+    }
+    if (pg.viewPreset === "triptych") {
+      return {
+        title: "~/projects/renderer — pi",
+        user: "Run all three shader passes and display them together",
+        agent: "All three passes finished — opening the triptych preview.",
+        toolFn: "supertools · view",
+        toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length})`,
+        waitSub: '{"shown":true}  (returned immediately — background window)',
+        waitClass: "is-ok",
+        inputWait: "Ask a follow-up…",
+      };
+    }
+    return {
+      title: "~/projects/renderer — pi",
+      user: "Run the tone-mapping pass and pop up the before/after when done",
+      agent: "Tone-mapping finished in 1.4s — opening the before/after comparison.",
+      toolFn: "supertools · view",
+      toolArg: `(prompt: "${cfg.prompt}", images: ${cfg.panels.length})`,
+      waitSub: '{"shown":true}  (returned immediately — background window)',
+      waitClass: "is-ok",
+      inputWait: "Ask a follow-up…",
+    };
+  }
+
+  function renderPgTerminal(stage = "open") {
+    const s = pgTermScript();
+    pgEls.termTitle.textContent = s.title;
+
+    const lines = [
+      `<div class="term-line term-line-user"><span class="t-sym">❯</span><span>${escapeHtml(s.user)}</span></div>`,
+      `<div class="term-line term-line-agent term-line-in"><span class="t-sym">✦</span><span>${escapeHtml(s.agent)}</span></div>`,
+    ];
+
+    if (stage === "calling" || stage === "open" || stage === "returned") {
+      lines.push(
+        `<div class="term-line term-line-tool${stage === "calling" ? " term-line-in" : ""}"><span class="t-sym">●</span><span class="t-fn">${escapeHtml(s.toolFn)}</span><span>${escapeHtml(s.toolArg)}</span></div>`
+      );
+      if (stage === "calling") {
+        lines.push(`<div class="term-line term-line-sub is-wait term-line-in"><span>└─ launching window…</span></div>`);
+      } else if (stage === "returned" && pg.lastResult) {
+        lines.push(`<div class="term-line term-line-sub is-ok term-line-in"><span>└─ ${escapeHtml(pg.lastResult)}</span></div>`);
+        if (pg.lastFollowup) {
+          lines.push(`<div class="term-line term-line-agent term-line-in"><span class="t-sym">✦</span><span>${escapeHtml(pg.lastFollowup)}</span></div>`);
+        }
+      } else {
+        lines.push(`<div class="term-line term-line-sub ${s.waitClass || "is-wait"}"><span>└─ ${escapeHtml(s.waitSub)}</span></div>`);
+      }
+    }
+
+    pgEls.termBody.innerHTML = lines.join("");
+    pgEls.termInputStatus.textContent =
+      stage === "speaking" ? "thinking…" : stage === "returned" ? "Ask a follow-up…" : s.inputWait;
+    pgEls.termBackdrop.classList.toggle("is-awake", stage !== "open");
+  }
+
+  function clearPgSequence() {
+    pg.seqTimers.forEach((id) => clearTimeout(id));
+    pg.seqTimers = [];
+  }
+
+  function returnToPgTerminal(resultLine, followupLine) {
+    clearPgSequence();
+    pg.lastResult = resultLine;
+    pg.lastFollowup = followupLine;
+
+    const finish = () => {
+      pgEls.previewWin.classList.add("is-launching");
+      pgEls.reopenBtn.hidden = false;
+      renderPgTerminal("returned");
+    };
+
+    if (REDUCED_MOTION) {
+      finish();
+      return;
+    }
+
+    pg.seqTimers.push(setTimeout(finish, 260));
+  }
+
+  function playPgLaunchSequence() {
+    pg.hasPlayedIntro = true;
+    clearPgSequence();
+    pg.lastResult = null;
+    pg.lastFollowup = null;
+    pgEls.reopenBtn.hidden = true;
+    renderPlayground();
+
+    if (REDUCED_MOTION) {
+      pgEls.previewWin.classList.remove("is-launching");
+      pgEls.toast.classList.remove("is-launching");
+      renderPgTerminal("open");
+      return;
+    }
+
+    pgEls.previewWin.classList.add("is-launching");
+    pgEls.toast.classList.add("is-launching");
+    renderPgTerminal("speaking");
+
+    pg.seqTimers.push(
+      setTimeout(() => {
+        renderPgTerminal("calling");
+      }, 1100)
+    );
+
+    pg.seqTimers.push(
+      setTimeout(() => {
+        renderPgTerminal("open");
+        pgEls.previewWin.classList.remove("is-launching");
+        pgEls.toast.classList.remove("is-launching");
+      }, 1750)
+    );
+  }
 
   function currentPgConfig() {
     if (pg.tool === "pick") return PICK_PRESETS[pg.pickPreset];
@@ -846,7 +1060,7 @@
           pg.viewPreset = key;
         }
         resetPgToast();
-        renderPlayground();
+        playPgLaunchSequence();
       });
       pgEls.presetTabs.appendChild(btn);
     });
@@ -911,6 +1125,10 @@
           const label = item.kind === "image" ? (item.cliImage || item.image) : (item.title || "");
           pgEls.toast.innerHTML = `stdout → <strong>${clickedIdx} ${escapeHtml(label)}</strong>`;
           renderPgPreview();
+          returnToPgTerminal(
+            `{"choice":"option","index":${clickedIdx},"label":"${label}"}`,
+            `Selected #${clickedIdx} (${label}). Continuing with your choice…`
+          );
         });
         pgEls.pkGrid.appendChild(tile);
       });
@@ -970,7 +1188,7 @@
         pg.drawStrokes = [];
       }
       resetPgToast();
-      renderPlayground();
+      playPgLaunchSequence();
     });
   });
 
@@ -978,9 +1196,23 @@
     if (pg.tool === "pick") {
       const cfg = PICK_PRESETS[pg.pickPreset];
       pgEls.toast.innerHTML = `stdout → <strong>-1 ${escapeHtml(cfg.none)}</strong>`;
+      returnToPgTerminal(
+        `{"choice":"none","label":"${cfg.none}"}`,
+        `Selected "${cfg.none}". Leaving current setup as is.`
+      );
     } else if (pg.tool === "view") {
       pgEls.toast.innerHTML = 'Window closed — MCP already returned <strong>{"shown":true}</strong>.';
+      returnToPgTerminal(
+        '{"shown":true}  (window closed)',
+        "Window closed. Tell me if you want to adjust anything."
+      );
     }
+  });
+
+  pgEls.reopenBtn.addEventListener("click", () => {
+    if (pg.tool === "draw") pg.drawStrokes = [];
+    resetPgToast();
+    playPgLaunchSequence();
   });
 
   pgEls.previewUndo.addEventListener("click", () => {
@@ -1000,6 +1232,11 @@
     const widths = pg.drawRefs.map((r) => (r.canvas ? r.canvas.getBoundingClientRect().width : 280));
     const summary = buildDrawSummary(cfg.panels, pg.drawStrokes, widths, false);
     pgEls.toast.innerHTML = `stdout → <strong>${escapeHtml(JSON.stringify(summary))}</strong>`;
+    const n = summary.strokes.length;
+    returnToPgTerminal(
+      `returned ${n} stroke${n === 1 ? "" : "s"} + marked PNG`,
+      n ? "Got your marked-up region. Updating the shader now…" : "No regions marked. Keeping the current pass."
+    );
   });
 
   document.querySelectorAll("[data-pg-tab]").forEach((tab) => {
@@ -1122,7 +1359,25 @@
     }
   });
 
-  // Initial render
+  // Initial render: wait until examples preview enters viewport to play the launch moment
   renderPlayground();
+  renderPgTerminal("speaking");
   selectMcpClient("claude");
+
+  if (!REDUCED_MOTION && "IntersectionObserver" in window && pgEls.previewWrap) {
+    pgEls.previewWin.classList.add("is-launching");
+    pgEls.toast.classList.add("is-launching");
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!pg.hasPlayedIntro && entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          playPgLaunchSequence();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    io.observe(pgEls.previewWrap);
+  } else {
+    renderPgTerminal("open");
+  }
 })();

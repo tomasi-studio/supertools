@@ -88,7 +88,20 @@
         </div>
 
         <div class="pg-output">
-          <div class="pg-preview-wrap">
+          <div class="pg-preview-wrap" id="pg-preview-wrap">
+            <div class="term-backdrop" id="pg-term-backdrop" aria-hidden="true">
+              <div class="term-chrome">
+                <div class="term-title" id="pg-term-title">~/projects/renderer — claude</div>
+                <div class="term-badge">mcp: supertools</div>
+              </div>
+              <div class="term-body" id="pg-term-body"></div>
+              <div class="term-input-row">
+                <span class="term-prompt-arrow">❯</span>
+                <span class="term-input-placeholder" id="pg-term-input-status">waiting on supertools tool call…</span>
+                <span class="term-cursor"></span>
+              </div>
+            </div>
+
             <div class="pk-window" id="pg-preview-window">
               <div class="pk-top">
                 <div class="pk-header">
@@ -107,9 +120,13 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="pg-toast-bar">
             <div class="pg-toast" id="pg-toast" aria-live="polite">
               Click any tile in the preview to see its output.
             </div>
+            <button type="button" class="pg-reopen-btn" id="pg-reopen-btn" hidden>Open again</button>
           </div>
 
           <div class="pg-code-card">
