@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>supertools — Visual windows for agents</title>
+  <title>supertools — Visual tools for terminal agents</title>
   <meta name="description" content="Small desktop windows an agent opens to pick options, mark up images, or show visuals—over CLI or a single stdio MCP server." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,33 +26,30 @@
       </a>
 
       <nav class="nav-links" aria-label="Primary">
-        <a href="#demo">Demo</a>
-        <a href="#playground">Playground</a>
+        <a href="#examples">Examples</a>
+        <a href="#install">Install</a>
         <a href="#mcp">MCP</a>
         <a href="#internals">Internals</a>
       </nav>
 
       <div class="topbar-meta">
-        <a href="#mcp" class="btn btn-primary btn-sm">Install MCP</a>
+        <a href="#install" class="btn btn-ghost btn-sm">Install now</a>
       </div>
     </div>
   </header>
 
   <main id="top">
-    <!-- HERO + 3-TOOL LIVE DESKTOP STAGE -->
-    <section class="hero" id="demo">
+    <!-- HERO -->
+    <section class="hero">
       <div class="container">
         <div class="hero-copy">
-          <h1>Small desktop windows<br />for your agents.</h1>
+          <h1>Visual tools for<br />terminal agents</h1>
           <p class="hero-lead">
-            <code>supertools</code> opens native borderless windows for three visual jobs—<code>pick</code> an option, <code>draw</code> on images, or <code>view</code> results—from a shell command or one stdio MCP server.
+            A tool and MCP server that lets CLI and TUI agents pop open native windows — so you can pick from image grids, text cards, or annotate screenshots instead of making guesses based on text descriptions or hunting for image file paths in your agent's output.
           </p>
           <div class="hero-actions">
-            <button type="button" class="btn btn-primary" id="focus-demo-btn">
-              Try live windows
-              <kbd>↓</kbd>
-            </button>
-            <a href="#mcp" class="btn btn-ghost">Connect via MCP</a>
+            <a href="#mcp" class="btn btn-primary">Connect via MCP</a>
+            <a href="#examples" class="btn btn-ghost">See examples</a>
           </div>
 
           <div class="works-in" aria-label="Supported agents and editors">
@@ -60,177 +57,21 @@
             <div class="works-in-list" id="works-in-list"></div>
           </div>
         </div>
-
-        <!-- INTERACTIVE STAGE -->
-        <div class="stage-shell" id="stage-shell">
-          <!-- TOP TOOL SWITCHER -->
-          <div class="stage-toolbar">
-            <div class="tool-switcher" role="tablist" aria-label="supertools tools">
-              <button type="button" class="tool-tab is-active" role="tab" aria-selected="true" data-tool="pick">
-                <span class="tool-dot"></span>
-                <span>pick</span>
-                <span class="tool-sub">choose</span>
-              </button>
-              <button type="button" class="tool-tab" role="tab" aria-selected="false" data-tool="draw">
-                <span class="tool-dot"></span>
-                <span>draw</span>
-                <span class="tool-sub">mark up</span>
-              </button>
-              <button type="button" class="tool-tab" role="tab" aria-selected="false" data-tool="view">
-                <span class="tool-dot"></span>
-                <span>view</span>
-                <span class="tool-sub">show</span>
-              </button>
-            </div>
-
-            <div class="stage-hints">
-              <button type="button" class="recenter-btn" id="recenter-btn" hidden>Reset position</button>
-            </div>
-          </div>
-
-          <!-- EXAMPLES TABS INSIDE CONTENT AREA -->
-          <div class="stage-examples-bar">
-            <span class="stage-examples-label">Examples</span>
-            <div class="preset-tabs" id="hero-preset-tabs" role="tablist" aria-label="Tool examples"></div>
-          </div>
-
-          <!-- SIMULATED TUI SURFACE WITH FLOATING SUPERTOOLS WINDOW -->
-          <div class="desktop-canvas" id="desktop-canvas" tabindex="0" aria-label="Interactive supertools desktop window demo">
-            <div class="term-backdrop" id="term-backdrop" aria-hidden="true">
-              <div class="term-chrome">
-                <div class="term-title" id="term-title">~/projects/renderer · claude</div>
-                <div class="term-badge">mcp: supertools</div>
-              </div>
-              <div class="term-body" id="term-body"></div>
-              <div class="term-input-row">
-                <span class="term-prompt-arrow">❯</span>
-                <span class="term-input-placeholder" id="term-input-status">waiting on supertools tool call…</span>
-                <span class="term-cursor"></span>
-              </div>
-            </div>
-
-            <!-- 1. PICK WINDOW -->
-            <div class="pk-window" id="hero-pick-window" role="dialog" aria-labelledby="hero-pk-prompt">
-              <div class="pk-top" data-drag-handle title="Drag header to move window">
-                <div class="pk-header">
-                  <div class="pk-prompt" id="hero-pk-prompt"></div>
-                  <div class="pk-sub">Click to choose &nbsp;·&nbsp; arrows + enter &nbsp;·&nbsp; esc to cancel</div>
-                </div>
-                <button type="button" class="pk-none-btn" id="hero-pk-none"></button>
-              </div>
-              <div class="pk-grid" id="hero-pk-grid"></div>
-            </div>
-
-            <!-- 2. DRAW WINDOW -->
-            <div class="pk-window pk-window-pointer" id="hero-draw-window" role="dialog" aria-labelledby="hero-draw-prompt" hidden>
-              <div class="pk-top" data-drag-handle title="Drag header to move window">
-                <div class="pk-header">
-                  <div class="pk-prompt" id="hero-draw-prompt"></div>
-                  <div class="pk-sub">Draw on the images &nbsp;·&nbsp; 1-5 colour &nbsp;·&nbsp; u undo &nbsp;·&nbsp; c clear &nbsp;·&nbsp; enter done &nbsp;·&nbsp; esc cancel</div>
-                </div>
-              </div>
-              <div class="ptr-canvas-grid" id="hero-draw-grid"></div>
-              <div class="ptr-footer">
-                <div class="ptr-swatches" id="hero-draw-swatches" role="radiogroup" aria-label="Brush colour"></div>
-                <div class="ptr-actions">
-                  <button type="button" class="pk-none-btn" id="hero-draw-undo">Undo</button>
-                  <button type="button" class="pk-none-btn" id="hero-draw-clear">Clear</button>
-                  <button type="button" class="pk-primary-btn" id="hero-draw-done">Done</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. VIEW WINDOW -->
-            <div class="pk-window pk-window-pointer" id="hero-view-window" role="dialog" aria-labelledby="hero-view-prompt" hidden>
-              <div class="pk-top" data-drag-handle title="Drag header to move window">
-                <div class="pk-header">
-                  <div class="pk-prompt" id="hero-view-prompt"></div>
-                  <div class="pk-sub">esc, enter or space to close</div>
-                </div>
-                <button type="button" class="pk-none-btn" id="hero-view-close">Close</button>
-              </div>
-              <div class="ptr-canvas-grid" id="hero-view-grid"></div>
-            </div>
-
-            <!-- EXITED OVERLAY -->
-            <div class="pk-exited" id="hero-pk-exited" hidden>
-              <div class="pk-exited-card">
-                <div class="pk-exited-head">
-                  <span class="exit-badge" id="exited-code-badge">exit 0</span>
-                  <span class="exited-title" id="exited-title">Done</span>
-                </div>
-                <div class="exited-thumbs" id="exited-thumbs" hidden></div>
-                <pre class="exited-stdout" id="exited-stdout"></pre>
-                <p class="exited-agent" id="exited-agent"></p>
-                <div class="pk-exited-actions">
-                  <button type="button" class="btn btn-primary btn-sm" id="hero-replay-btn">
-                    Open again <kbd>Space</kbd>
-                  </button>
-                  <button type="button" class="btn btn-ghost btn-sm" id="hero-next-tool-btn">
-                    Try next tool
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- LIVE OUTPUT INSPECTOR -->
-          <div class="inspector">
-            <div class="inspector-bar">
-              <div class="inspector-tabs" role="tablist" aria-label="Output format">
-                <button type="button" class="inspector-tab is-active" data-view="cli" role="tab" aria-selected="true">CLI stdout</button>
-                <button type="button" class="inspector-tab" data-view="mcp" role="tab" aria-selected="false">MCP stdio</button>
-              </div>
-              <div class="inspector-status" id="inspector-status">
-                <span class="status-dot is-waiting"></span>
-                <span id="inspector-status-text">blocked · waiting for input</span>
-              </div>
-            </div>
-
-            <div class="inspector-body">
-              <div class="inspector-pane" id="inspector-cli-pane">
-                <div class="code-row">
-                  <span class="code-label">command</span>
-                  <pre class="code-line" id="live-cli-cmd"></pre>
-                  <button type="button" class="mini-copy" id="copy-live-cli">Copy</button>
-                </div>
-                <div class="code-row code-row-result">
-                  <span class="code-label">stdout</span>
-                  <pre class="code-line" id="live-cli-out"><span class="dim"># waiting for input...</span></pre>
-                  <span class="exit-pill is-waiting" id="live-exit-pill">running</span>
-                </div>
-              </div>
-
-              <div class="inspector-pane" id="inspector-mcp-pane" hidden>
-                <div class="mcp-split">
-                  <div class="mcp-col">
-                    <div class="code-label" id="live-mcp-req-label">tools/call → pick</div>
-                    <pre class="code-block-sm" id="live-mcp-req"></pre>
-                  </div>
-                  <div class="mcp-col">
-                    <div class="code-label" id="live-mcp-res-label">structuredContent</div>
-                    <pre class="code-block-sm" id="live-mcp-res"></pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
-    <!-- INTERACTIVE PLAYGROUND -->
-    <section class="section section-alt" id="playground">
+    <!-- INTERACTIVE EXAMPLES -->
+    <section class="section section-alt" id="examples">
       <div class="container">
         <div class="section-head">
-          <p class="section-kicker">Interactive builder</p>
-          <h2>Compose an supertools call.</h2>
+          <p class="section-kicker">Interactive examples</p>
+          <h2>Try supertools live.</h2>
           <p class="section-desc">
-            Switch between <code>pick</code>, <code>draw</code>, and <code>view</code>, edit options and items, and copy either the CLI command or the MCP arguments.
+            Switch between the different view modes and see the generated output. The real thing is a small, cross-platform native app at ~1MB that starts instantly, and uses almost no system memory.
           </p>
         </div>
 
-        <div class="pg-mode-bar" id="pg-mode-bar" role="tablist" aria-label="Playground tool">
+        <div class="pg-mode-bar" id="pg-mode-bar" role="tablist" aria-label="supertools tool">
           <button type="button" class="pg-mode-btn is-active" data-pg-tool="pick" role="tab" aria-selected="true">
             <code>supertools picker</code> <span>→ pick</span>
           </button>
@@ -242,128 +83,86 @@
           </button>
         </div>
 
-        <div class="playground-grid">
-          <div class="pg-controls">
-            <div class="pg-field">
-              <label for="pg-prompt">--prompt</label>
-              <input type="text" id="pg-prompt" value="Which splash render should we bundle?" placeholder="Heading shown above the window" />
-            </div>
+        <div class="pg-presets-bar">
+          <div class="preset-tabs" id="pg-preset-tabs" role="tablist" aria-label="Tool examples"></div>
+        </div>
 
-            <!-- PICK-ONLY CONTROLS -->
-            <div id="pg-pick-only">
-              <div class="pg-row-2">
-                <div class="pg-field">
-                  <label>--cols</label>
-                  <div class="segmented" id="pg-cols" role="radiogroup" aria-label="Columns">
-                    <button type="button" data-cols="1">1</button>
-                    <button type="button" data-cols="2">2</button>
-                    <button type="button" data-cols="3" class="is-active">3</button>
-                    <button type="button" data-cols="4">4</button>
-                  </div>
+        <div class="pg-output">
+          <div class="pg-preview-wrap">
+            <div class="pk-window" id="pg-preview-window">
+              <div class="pk-top">
+                <div class="pk-header">
+                  <div class="pk-prompt" id="pg-pk-prompt"></div>
+                  <div class="pk-sub" id="pg-pk-sub">Click to choose &nbsp;·&nbsp; arrows + enter &nbsp;·&nbsp; esc to cancel</div>
                 </div>
-
-                <div class="pg-field">
-                  <label for="pg-width">--width (cells)</label>
-                  <input type="number" id="pg-width" min="30" max="180" value="100" />
-                </div>
+                <button type="button" class="pk-none-btn" id="pg-pk-none"></button>
               </div>
-
-              <div class="pg-field pg-gap-top">
-                <div class="pg-label-row">
-                  <label for="pg-none">--none</label>
-                  <label class="toggle-inline">
-                    <input type="checkbox" id="pg-none-enabled" checked />
-                    <span>Show button</span>
-                  </label>
+              <div class="pk-grid" id="pg-pk-grid"></div>
+              <div class="ptr-footer ptr-footer-compact" id="pg-ptr-footer" hidden>
+                <div class="ptr-swatches" id="pg-preview-swatches"></div>
+                <div class="ptr-actions">
+                  <button type="button" class="pk-none-btn" id="pg-preview-undo">Undo</button>
+                  <button type="button" class="pk-none-btn" id="pg-preview-clear">Clear</button>
+                  <button type="button" class="pk-primary-btn" id="pg-preview-done">Done</button>
                 </div>
-                <input type="text" id="pg-none" value="Keep current" placeholder="Button label" />
               </div>
             </div>
-
-            <!-- DRAW-ONLY CONTROLS -->
-            <div id="pg-draw-only" hidden>
-              <div class="pg-field">
-                <label>--color</label>
-                <div class="ptr-swatches" id="pg-color-swatches" role="radiogroup" aria-label="Starting brush colour"></div>
-              </div>
-
-              <div class="pg-field pg-gap-top">
-                <label class="toggle-inline">
-                  <input type="checkbox" id="pg-points" />
-                  <span>Include full stroke point list (<code>--points</code>)</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- ITEMS / IMAGES LIST -->
-            <div class="pg-items-section">
-              <div class="pg-label-row">
-                <span class="field-title" id="pg-items-heading">Items (<span id="pg-item-count">3</span>)</span>
-                <div class="pg-add-group" id="pg-add-pick-group">
-                  <button type="button" class="btn-chip" id="pg-add-text">+ Text</button>
-                  <button type="button" class="btn-chip" id="pg-add-image">+ Image</button>
-                  <button type="button" class="btn-chip" id="pg-add-card">+ Card</button>
-                </div>
-                <div class="pg-add-group" id="pg-add-panel-group" hidden>
-                  <button type="button" class="btn-chip" id="pg-add-panel">+ Image (max 4)</button>
-                </div>
-              </div>
-              <div class="pg-items-list" id="pg-items-list"></div>
+            <div class="pg-toast" id="pg-toast" aria-live="polite">
+              Click any tile in the preview to see its output.
             </div>
           </div>
 
-          <div class="pg-output">
-            <div class="pg-preview-wrap">
-              <div class="pk-window pk-window-compact" id="pg-preview-window">
-                <div class="pk-top">
-                  <div class="pk-header">
-                    <div class="pk-prompt" id="pg-pk-prompt"></div>
-                    <div class="pk-sub" id="pg-pk-sub">Click to choose &nbsp;·&nbsp; arrows + enter &nbsp;·&nbsp; esc to cancel</div>
-                  </div>
-                  <button type="button" class="pk-none-btn" id="pg-pk-none"></button>
-                </div>
-                <div class="pk-grid" id="pg-pk-grid"></div>
-                <div class="ptr-footer ptr-footer-compact" id="pg-ptr-footer" hidden>
-                  <div class="ptr-swatches" id="pg-preview-swatches"></div>
-                  <div class="ptr-actions">
-                    <button type="button" class="pk-none-btn" id="pg-preview-clear">Clear</button>
-                    <button type="button" class="pk-primary-btn" id="pg-preview-done">Done</button>
-                  </div>
-                </div>
+          <div class="pg-code-card">
+            <div class="pg-code-head">
+              <div class="inspector-tabs" role="tablist">
+                <button type="button" class="inspector-tab is-active" data-pg-tab="cli">Shell CLI</button>
+                <button type="button" class="inspector-tab" data-pg-tab="mcp">MCP arguments</button>
               </div>
-              <div class="pg-toast" id="pg-toast" aria-live="polite">
-                Click any tile in the preview to see its output.
-              </div>
+              <button type="button" class="mini-copy" id="pg-copy-btn">Copy</button>
             </div>
-
-            <div class="pg-code-card">
-              <div class="pg-code-head">
-                <div class="inspector-tabs" role="tablist">
-                  <button type="button" class="inspector-tab is-active" data-pg-tab="cli">Shell CLI</button>
-                  <button type="button" class="inspector-tab" data-pg-tab="mcp">MCP arguments</button>
-                </div>
-                <button type="button" class="mini-copy" id="pg-copy-btn">Copy</button>
-              </div>
-              <pre class="pg-code-pre" id="pg-code-output"></pre>
-            </div>
+            <pre class="pg-code-pre" id="pg-code-output"></pre>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- MCP SERVER -->
-    <section class="section" id="mcp">
+    <!-- INSTALL + MCP -->
+    <section class="section" id="install">
       <div class="container">
         <div class="section-head">
-          <p class="section-kicker">Model Context Protocol</p>
-          <h2>One stdio MCP server, three tools.</h2>
+          <p class="section-kicker">Install</p>
+          <h2>Install supertools</h2>
           <p class="section-desc">
-            Run <code>supertools --mcp</code> to speak newline-delimited JSON-RPC 2.0 (protocol <code>2025-06-18</code>) on stdin/stdout. It serves <code>pick</code>, <code>draw</code>, and <code>view</code>, spawning a fresh window process per call.
+            Install the supertools CLI, then connect to your harness.
           </p>
         </div>
 
-        <div class="mcp-layout">
-          <div class="mcp-setup-col">
+        <div class="install-box">
+          <h3 class="install-step-heading">1. Install the CLI</h3>
+
+          <div class="os-toggle" role="tablist" aria-label="Operating system">
+            <button type="button" class="os-tab is-active" role="tab" aria-selected="true" data-os="mac">
+              macOS
+            </button>
+            <button type="button" class="os-tab" role="tab" aria-selected="false" data-os="linux" disabled title="Coming soon">
+              Linux <span class="os-soon">soon</span>
+            </button>
+            <button type="button" class="os-tab" role="tab" aria-selected="false" data-os="windows" disabled title="Coming soon">
+              Windows <span class="os-soon">soon</span>
+            </button>
+          </div>
+
+          <div class="code-card install-card">
+            <div class="code-card-head">
+              <span>Homebrew</span>
+              <button type="button" class="mini-copy" id="copy-install-cmd">Copy</button>
+            </div>
+            <pre><code id="install-cmd-code"></code></pre>
+          </div>
+
+          <div class="mcp-connect" id="mcp">
+            <h3 class="install-step-heading">2. Connect to your harness with MCP</h3>
+
             <div class="client-switcher" id="mcp-client-switcher" role="tablist" aria-label="Choose MCP client"></div>
 
             <div class="code-card" id="mcp-cli-card">
@@ -389,45 +188,6 @@
               </p>
             </div>
           </div>
-
-          <div class="mcp-trace-col">
-            <div class="trace-card">
-              <div class="trace-steps" role="tablist" aria-label="MCP handshake steps">
-                <button type="button" class="trace-step is-active" data-trace="init" role="tab" aria-selected="true">
-                  <span class="step-num">01</span>
-                  <span>initialize</span>
-                </button>
-                <button type="button" class="trace-step" data-trace="list" role="tab" aria-selected="false">
-                  <span class="step-num">02</span>
-                  <span>tools/list</span>
-                </button>
-                <button type="button" class="trace-step" data-trace="call" role="tab" aria-selected="false">
-                  <span class="step-num">03</span>
-                  <span>tools/call</span>
-                </button>
-              </div>
-
-              <div class="trace-subbar" id="trace-call-switcher" hidden>
-                <span class="trace-sublabel">Tool call example:</span>
-                <div class="inspector-tabs" role="tablist" aria-label="Tool call example">
-                  <button type="button" class="inspector-tab is-active" data-trace-tool="pick">pick</button>
-                  <button type="button" class="inspector-tab" data-trace-tool="draw">draw</button>
-                  <button type="button" class="inspector-tab" data-trace-tool="view">view</button>
-                </div>
-              </div>
-
-              <div class="trace-panes">
-                <div class="trace-block">
-                  <div class="trace-dir">client → stdin</div>
-                  <pre class="trace-pre" id="trace-req"></pre>
-                </div>
-                <div class="trace-block">
-                  <div class="trace-dir">supertools --mcp → stdout</div>
-                  <pre class="trace-pre" id="trace-res"></pre>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -437,25 +197,16 @@
       <div class="container">
         <div class="section-head">
           <p class="section-kicker">Under the hood</p>
-          <h2>Built in C3 with milktea.</h2>
+          <h2>Built for speed</h2>
           <p class="section-desc">
-            A standalone desktop app written in C3 on top of <code>milktea</code>, running natively on macOS, Linux, and Windows.
+            <code>supertools</code> is built in <a class="text-link" href="https://c3-lang.org" target="_blank" rel="noopener noreferrer">C3</a> using the <a class="text-link" href="https://github.com/ricardobeat/milktea" target="_blank" rel="noopener noreferrer">milktea</a> framework and <a class="text-link" href="https://github.com/floooh/sokol" target="_blank" rel="noopener noreferrer">sokol_gfx</a>. It runs natively on Mac, Windows, and Linux, all in a slim ~1MB download. The source is MIT licensed and available on GitHub.
           </p>
         </div>
 
-        <div class="build-strip">
-          <div class="build-info">
-            <h3>Build from source</h3>
-            <p>
-              Source and build instructions live at
-              <a class="text-link" href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">github.com/ricardobeat/supertools</a>.
-            </p>
-          </div>
-          <div class="build-actions">
-            <a class="btn btn-ghost btn-sm" href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">
-              View on GitHub ↗
-            </a>
-          </div>
+        <div class="build-actions">
+          <a class="btn btn-ghost btn-sm" href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">
+            View on GitHub ↗
+          </a>
         </div>
       </div>
     </section>
@@ -469,12 +220,13 @@
         </span>
         <span>supertools</span>
         <span class="sep">·</span>
-        <span class="muted">Small desktop windows for agents</span>
+        <span class="muted">Visual tools for terminal agents</span>
       </div>
       <div class="footer-right">
-        <a href="#demo">Live demo</a>
-        <a href="#playground">Playground</a>
+        <a href="#examples">Examples</a>
+        <a href="#install">Install</a>
         <a href="#mcp">MCP</a>
+        <a href="#internals">Internals</a>
         <a href="https://github.com/ricardobeat/supertools" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </div>
